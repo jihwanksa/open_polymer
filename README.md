@@ -114,9 +114,6 @@ conda create -n polymer_pred python=3.10 -y
 conda activate polymer_pred
 conda install -c conda-forge rdkit -y
 pip install -r requirements.txt
-
-# Or use the setup script:
-scripts\setup_windows.bat
 ```
 
 **Note:** Windows users don't need to set `LD_LIBRARY_PATH`. All Python code is cross-platform compatible!
@@ -149,17 +146,14 @@ python app/app.py
 ### 2. Train Models
 
 ```bash
-# Train all models (traditional ML)
+# Traditional ML (5-7 min on CPU)
 python src/train.py
 
-# GNN (requires GPU)
+# GNN (30 sec with GPU)
 python src/train_gnn_tuned.py
 
-# Transformer (requires GPU, 20+ min)
+# Transformer (22 min with GPU)
 python src/train_transformer.py
-
-# Or use the convenience script (Linux/macOS):
-bash scripts/run_training.sh
 ```
 
 ### 3. View Results
@@ -193,20 +187,23 @@ open_polymer/
 ├── requirements.txt             # Python dependencies
 ├── .gitignore                   # Git ignore rules
 │
+├── app/                         # 🎨 Interactive Web Demo
+│   ├── app.py                   # Gradio web interface
+│   ├── README.md                # Demo usage guide
+│   ├── LAUNCH_DEMO.md           # Detailed deployment guide
+│   └── screenshot_*.png         # Interface screenshots
+│
 ├── src/                         # Source code
-│   ├── __init__.py
+│   ├── README.md                # Code documentation
 │   ├── data_preprocessing.py    # Feature extraction
-│   ├── train.py                 # Main training pipeline
+│   ├── train.py                 # Traditional ML training
+│   ├── train_gnn_tuned.py       # GNN training
+│   ├── train_transformer.py     # Transformer training
 │   └── models/                  # Model implementations
 │       ├── __init__.py
 │       ├── traditional.py       # XGBoost & Random Forest
 │       ├── gnn.py              # Graph Neural Network
-│       └── transformer.py      # ChemBERTa-based model
-│
-├── scripts/                     # Utility scripts
-│   └── run_training.sh         # Training launcher
-│
-├── notebooks/                   # Jupyter notebooks (future)
+│       └── transformer.py      # DistilBERT-based model
 │
 ├── data/                        # Data directory
 │   └── raw/                    # Original Kaggle data
@@ -216,16 +213,23 @@ open_polymer/
 │       └── train_supplement/   # Additional datasets
 │
 ├── models/                      # Saved model checkpoints
-│   ├── xgboost_model.pkl       # (8.7 MB)
-│   └── random_forest_model.pkl # (65 MB)
+│   ├── README.md                # Model specifications
+│   ├── xgboost_model.pkl       # (9 MB)
+│   ├── random_forest_model.pkl # (65 MB)
+│   ├── gnn_tuned_model.pt      # (2 MB)
+│   └── transformer_model.pt    # (250 MB)
 │
-├── results/                     # Training results
-│   ├── model_comparison.csv    # Metrics table
-│   └── model_comparison.png    # Performance plots
+├── results/                     # Training results & analysis
+│   ├── README.md                # Results documentation
+│   ├── all_models_comparison.csv  # Complete metrics
+│   ├── model_comparison.png     # Performance plots
+│   └── *_results.csv            # Individual model results
 │
-└── docs/                        # Additional documentation
-    ├── RESULTS_SUMMARY.md      # Detailed analysis
-    └── QUICK_START.md          # Quick reference guide
+└── docs/                        # Documentation & presentations
+    ├── RESULTS.md               # Detailed analysis
+    ├── VC_PITCH.md              # Investor presentation
+    ├── EXECUTIVE_SUMMARY.md     # One-page overview
+    └── COMPLETION_SUMMARY.md    # Project summary
 ```
 
 ## 🤖 Model Architectures
