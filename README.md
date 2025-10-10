@@ -10,15 +10,24 @@ A comprehensive machine learning framework for predicting polymer properties fro
 
 ## 🎯 Quick Results
 
-| Property | Best Model | RMSE | R² Score |
-|----------|-----------|------|----------|
-| **Density** | XGBoost | 0.064 g/cm³ | **0.798** ⭐⭐ |
-| **FFV** | XGBoost | 0.015 | **0.760** ⭐ |
-| **Tc** | Random Forest | 0.046 | **0.761** ⭐ |
-| **Tg** | Random Forest | 69.49 °C | 0.629 |
-| **Rg** | XGBoost | 3.14 Å | 0.561 |
+**Competition Metric (wMAE - Lower is Better):**
 
-**Average R² Score:** 0.698 (XGBoost), 0.678 (Random Forest)
+| Rank | Model | Type | wMAE | Training Time | Status |
+|------|-------|------|------|---------------|--------|
+| 🥇 | **XGBoost** | Traditional ML | **0.030429** | 5 min | ✅ Best |
+| 🥈 | **Random Forest** | Traditional ML | **0.031638** | 3 min | ✅ |
+| 🥉 | **Transformer** | Deep Learning | **0.069180** | 22 min | ✅ |
+| 4️⃣ | **GNN (Tuned)** | Deep Learning | **0.177712** | 30 sec | ✅ |
+
+**Property-wise (Best Models):**
+
+| Property | Best Model | RMSE | R² | MAE |
+|----------|-----------|------|-----|-----|
+| **Density** | XGBoost | 0.064 | **0.798** ⭐⭐ | 0.038 |
+| **FFV** | XGBoost | 0.015 | **0.760** ⭐ | 0.007 |
+| **Tc** | Random Forest | 0.046 | **0.761** ⭐ | 0.031 |
+| **Tg** | Random Forest | 69.49 °C | 0.629 | 54.70 |
+| **Rg** | XGBoost | 3.14 Å | 0.562 | 2.173 |
 
 ## 📋 Table of Contents
 
@@ -37,9 +46,9 @@ A comprehensive machine learning framework for predicting polymer properties fro
 ## ✨ Features
 
 - **Multiple Model Architectures**
-  - ✅ Traditional ML: XGBoost, Random Forest
-  - ✅ Graph Neural Networks (GNN): GCN with graph pooling
-  - ✅ Transformers: ChemBERTa-based architecture
+  - ✅ Traditional ML: XGBoost, Random Forest (wMAE: 0.030)
+  - ✅ Transformers: DistilBERT-based (wMAE: 0.069)
+  - ✅ Graph Neural Networks: 4-layer GCN with GPU acceleration (wMAE: 0.178)
 
 - **Comprehensive Feature Engineering**
   - 15 molecular descriptors (MolWt, LogP, TPSA, etc.)
@@ -55,6 +64,12 @@ A comprehensive machine learning framework for predicting polymer properties fro
   - Multiple metrics (RMSE, MAE, R²)
   - Cross-validation support
   - Detailed performance visualization
+
+- **Interactive Web Demo**
+  - Beautiful Gradio interface
+  - Real-time molecule visualization
+  - Instant property predictions
+  - Application guidance for each polymer
 
 ## 🚀 Installation
 
@@ -117,12 +132,19 @@ See [`requirements.txt`](requirements.txt) for full list.
 
 ## 🎓 Quick Start
 
-### 1. Explore the Data
+### 1. Try the Interactive Demo 🎨
 
 ```bash
-cd src
-python data_preprocessing.py
+# Launch web interface
+python app/app.py
+
+# Opens at http://localhost:7861
+# - Visualize molecules
+# - Predict properties instantly
+# - Get application guidance
 ```
+
+**See [app/README.md](app/README.md) for detailed demo guide**
 
 ### 2. Train Models
 
@@ -130,19 +152,21 @@ python data_preprocessing.py
 # Train all models (traditional ML)
 python src/train.py
 
-# Or use the convenience script:
-# Linux/macOS:
-bash scripts/run_training.sh
+# GNN (requires GPU)
+python src/train_gnn_tuned.py
 
-# Windows:
-scripts\run_training.bat
+# Transformer (requires GPU, 20+ min)
+python src/train_transformer.py
+
+# Or use the convenience script (Linux/macOS):
+bash scripts/run_training.sh
 ```
 
 ### 3. View Results
 
 ```bash
 # See comparison metrics
-cat results/model_comparison.csv
+cat results/all_models_comparison.csv
 
 # View visualizations
 # results/model_comparison.png
@@ -220,19 +244,23 @@ open_polymer/
 - Good interpretability via feature importance
 - **Best for:** Tc (R²=0.761)
 
-### 2. Graph Neural Networks
+### 2. Graph Neural Networks (GPU-Accelerated)
 
-- **Architecture:** 3-layer GCN with batch normalization
+- **Architecture:** 4-layer GCN with batch normalization (tuned)
 - **Pooling:** Global mean + max pooling
 - **Input:** Molecular graphs (atoms as nodes, bonds as edges)
 - **Node Features:** Atom type, degree, charge, aromaticity (9 features)
+- **Performance:** wMAE = 0.178 (14% improvement over baseline)
+- **Training:** 30 seconds on RTX 4070 GPU
 
-### 3. Transformer (ChemBERTa)
+### 3. Transformer (DistilBERT)
 
-- **Base:** Pre-trained ChemBERTa encoder
-- **Head:** 2-layer MLP regression head (256 → 128 → 5)
-- **Input:** Raw SMILES strings
-- **Optimization:** Separate learning rates for encoder vs head
+- **Base:** Pre-trained DistilBERT encoder (frozen)
+- **Head:** 3-layer MLP regression head (768 → 256 → 128 → 5)
+- **Input:** Raw SMILES strings (max length: 256)
+- **Training:** 20 epochs, batch size 16, lr=2e-5
+- **Performance:** wMAE = 0.069 (3rd place, 21.8 min training)
+- **Features:** Early stopping, gradient clipping, NaN handling
 
 ## 💡 Usage Examples
 
@@ -305,40 +333,49 @@ fingerprint = processor.compute_morgan_fingerprint(smiles, radius=2)
 
 ## 📊 Results
 
-### Performance by Target Property
+**See [results/README.md](results/README.md) for complete analysis**
 
-**FFV (Fractional Free Volume)** - Most abundant labels (88% coverage)
-- XGBoost: RMSE=0.0147, R²=0.760 ⭐
-- Data-rich enables strong predictions
+### Highlights
 
-**Density** - Best overall performance
-- XGBoost: RMSE=0.064 g/cm³, R²=0.798 ⭐⭐
-- Physical property well-captured by features
+**🏆 Winner: XGBoost**
+- wMAE: 0.030429 (competition metric)
+- Training: 5 minutes on CPU
+- Best for: Density (R²=0.798), FFV (R²=0.760)
+- **Recommended for production**
 
-**Tc (Critical Temperature)** - Strong performance
-- Random Forest: RMSE=0.046, R²=0.761 ⭐
-- Ensemble method excels
+**🥈 Close Second: Random Forest**
+- wMAE: 0.031638 (3.9% behind XGBoost)
+- Training: 3 minutes on CPU
+- More robust to outliers
+- Best for: Tc (R²=0.761), Tg (R²=0.629)
 
-**Tg (Glass Transition Temperature)** - Moderate performance
-- Random Forest: RMSE=69.49 °C, R²=0.629
-- Limited data (6% coverage) challenges predictions
+**🥉 Transformer (DistilBERT):**
+- wMAE: 0.069180 (127% behind XGBoost)
+- Training: 22 minutes on GPU
+- No feature engineering required (raw SMILES)
+- Shows promise for larger datasets
 
-**Rg (Radius of Gyration)** - Most challenging
-- XGBoost: RMSE=3.14 Å, R²=0.561
-- Structural complexity makes prediction difficult
+**4️⃣ GNN (Tuned):**
+- wMAE: 0.177712 (484% behind XGBoost)
+- Training: 30 seconds on GPU
+- 14% improvement from hyperparameter tuning
+- Needs larger dataset (100K+ samples) to excel
 
 ### Key Insights
 
-1. **Feature Engineering Matters:** Combining descriptors and fingerprints improves performance
-2. **Sparse Labels:** Models handle missing data well via per-target training
-3. **XGBoost vs Random Forest:** XGBoost slightly better on average
-4. **Data Coverage:** Performance doesn't strictly correlate with label abundance
+1. **Traditional ML Wins:** For 8K dataset, XGBoost/RF outperform deep learning by 2-6x
+2. **Feature Engineering:** Descriptors + fingerprints → 40% better than either alone
+3. **Deep Learning Challenges:** Both GNN and Transformer underperform on small datasets
+4. **Training Efficiency:** Traditional ML offers best accuracy/time tradeoff
+5. **GPU Acceleration:** Essential for deep learning but not enough to overcome data scarcity
+6. **Property Difficulty:** Density easiest (R²=0.80), Rg hardest (R²=0.56)
 
 ## 📚 Documentation
 
-- **[QUICK_START.md](docs/QUICK_START.md)** - Commands, use cases, troubleshooting
-- **[RESULTS_SUMMARY.md](docs/RESULTS_SUMMARY.md)** - Detailed analysis and insights
-- **Source Code** - Extensively commented for readability
+- **[results/README.md](results/README.md)** - Complete analysis, metrics, and insights
+- **[src/README.md](src/README.md)** - Source code documentation and API reference  
+- **[models/README.md](models/README.md)** - Trained models and usage examples
+- **Competition:** [Kaggle NeurIPS 2025](https://www.kaggle.com/competitions/neurips-open-polymer-prediction-2025)
 
 ## 🛠️ Development
 
@@ -408,6 +445,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-**Project Status:** ✅ Traditional ML Complete | ⚠️ Deep Learning 95% Complete
+**Project Status:** ✅ All Models Complete | 🏆 XGBoost Best (wMAE: 0.030)
 
-**Last Updated:** October 2025
+**Last Updated:** October 10, 2025

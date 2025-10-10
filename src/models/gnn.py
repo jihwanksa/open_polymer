@@ -132,11 +132,12 @@ class GNNModel:
     """Wrapper for GNN training and inference"""
     
     def __init__(self, hidden_dim=128, num_layers=3, num_targets=5, 
-                 gnn_type='gcn', device='cuda'):
+                 gnn_type='gcn', dropout=0.2, device='cuda'):
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
         self.num_targets = num_targets
         self.gnn_type = gnn_type
+        self.dropout = dropout
         self.device = device if torch.cuda.is_available() else 'cpu'
         self.model = None
         
@@ -162,6 +163,7 @@ class GNNModel:
             hidden_dim=self.hidden_dim,
             num_layers=self.num_layers,
             num_targets=self.num_targets,
+            dropout=self.dropout,
             gnn_type=self.gnn_type
         ).to(self.device)
         return self.model
@@ -176,7 +178,7 @@ class GNNModel:
         
         optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode='min', factor=0.5, patience=10, verbose=True
+            optimizer, mode='min', factor=0.5, patience=10
         )
         
         best_val_loss = float('inf')
@@ -194,15 +196,32 @@ class GNNModel:
                 batch = batch.to(self.device)
                 optimizer.zero_grad()
                 
-                out = self.model(batch)
+                out = self.model(batch)  # Shape: [batch_size, num_targets]
                 
-                # Compute loss only for non-zero targets
-                mask = batch.y != 0
-                if mask.sum() > 0:
-                    loss = F.mse_loss(out[mask], batch.y[mask])
+                # Reshape batch.y from [batch_size * num_targets] to [batch_size, num_targets]
+                batch_size = out.shape[0]
+                num_targets = out.shape[1]
+                target = batch.y.view(batch_size, num_targets)
+                
+                # Handle NaN values in targets
+                mask = ~torch.isnan(target)
+                
+                if mask.any():
+                    # Use masked loss - only compute loss for non-NaN values
+                    masked_out = torch.where(mask, out, torch.zeros_like(out))
+                    masked_target = torch.where(mask, target, torch.zeros_like(target))
+                    
+                    # Compute MSE only on valid values
+                    squared_error = (masked_out - masked_target) ** 2
+                    loss = (squared_error * mask.float()).sum() / mask.float().sum()
+                    
                     loss.backward()
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
                     optimizer.step()
                     train_loss += loss.item()
+                else:
+                    # Skip batch if all values are NaN
+                    pass
             
             train_loss /= len(train_loader)
             
@@ -210,8 +229,8 @@ class GNNModel:
             val_loss, val_metrics = self.evaluate(val_loader)
             scheduler.step(val_loss)
             
-            if (epoch + 1) % 10 == 0:
-                print(f"Epoch {epoch+1:3d} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}")
+            if (epoch + 1) % 5 == 0 or epoch < 3:  # More frequent updates
+                print(f"Epoch {epoch+1:3d}/{epochs} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | LR: {optimizer.param_groups[0]['lr']:.6f}")
             
             # Early stopping
             if val_loss < best_val_loss:
@@ -240,15 +259,27 @@ class GNNModel:
         with torch.no_grad():
             for batch in data_loader:
                 batch = batch.to(self.device)
-                out = self.model(batch)
+                out = self.model(batch)  # Shape: [batch_size, num_targets]
                 
-                mask = batch.y != 0
-                if mask.sum() > 0:
-                    loss = F.mse_loss(out[mask], batch.y[mask])
+                # Reshape batch.y from [batch_size * num_targets] to [batch_size, num_targets]
+                batch_size = out.shape[0]
+                num_targets = out.shape[1]
+                target = batch.y.view(batch_size, num_targets)
+                
+                # Handle NaN values in targets
+                mask = ~torch.isnan(target)
+                
+                if mask.any():
+                    # Use masked loss
+                    masked_out = torch.where(mask, out, torch.zeros_like(out))
+                    masked_target = torch.where(mask, target, torch.zeros_like(target))
+                    
+                    squared_error = (masked_out - masked_target) ** 2
+                    loss = (squared_error * mask.float()).sum() / mask.float().sum()
                     total_loss += loss.item()
                 
                 all_preds.append(out.cpu().numpy())
-                all_targets.append(batch.y.cpu().numpy())
+                all_targets.append(target.cpu().numpy())
         
         avg_loss = total_loss / len(data_loader) if len(data_loader) > 0 else 0
         

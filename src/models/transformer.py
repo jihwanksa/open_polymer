@@ -1,6 +1,7 @@
 """
 Transformer-based model for SMILES using pre-trained ChemBERTa
 """
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -57,17 +58,13 @@ class TransformerMoleculeModel(nn.Module):
         
         # Load pre-trained transformer
         try:
+            print(f"Loading transformer model: {model_name}")
             self.transformer = AutoModel.from_pretrained(model_name)
             transformer_dim = self.transformer.config.hidden_size
         except Exception as e:
-            print(f"Warning: Could not load {model_name}, using fallback")
-            # Fallback to a smaller model if ChemBERTa is not available
-            try:
-                model_name = 'bert-base-uncased'
-                self.transformer = AutoModel.from_pretrained(model_name)
-                transformer_dim = self.transformer.config.hidden_size
-            except:
-                raise RuntimeError("Could not load any transformer model")
+            print(f"Warning: Could not load {model_name}")
+            print(f"Error: {e}")
+            raise RuntimeError(f"Could not load transformer model: {model_name}")
         
         print(f"Using transformer: {model_name}")
         
@@ -103,10 +100,11 @@ class TransformerModel:
     """Wrapper for transformer training and inference"""
     
     def __init__(self, model_name='seyonec/ChemBERTa-zinc-base-v1', 
-                 num_targets=5, hidden_dim=256, device='cuda'):
+                 num_targets=5, hidden_dim=256, dropout=0.2, device='cuda'):
         self.model_name = model_name
         self.num_targets = num_targets
         self.hidden_dim = hidden_dim
+        self.dropout = dropout
         self.device = device if torch.cuda.is_available() else 'cpu'
         self.model = None
         self.tokenizer = None
@@ -142,6 +140,7 @@ class TransformerModel:
         self.model = TransformerMoleculeModel(
             model_name=self.model_name,
             num_targets=self.num_targets,
+            dropout=self.dropout,
             hidden_dim=self.hidden_dim
         ).to(self.device)
         
@@ -164,12 +163,13 @@ class TransformerModel:
         ], weight_decay=0.01)
         
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode='min', factor=0.5, patience=5, verbose=True
+            optimizer, mode='min', factor=0.5, patience=5
         )
         
         best_val_loss = float('inf')
         patience_counter = 0
         max_patience = 15
+        self.best_model_state = None  # Initialize to avoid AttributeError
         
         print(f"\nTraining Transformer Model...")
         print("=" * 80)
@@ -188,10 +188,16 @@ class TransformerModel:
                 optimizer.zero_grad()
                 outputs = self.model(input_ids, attention_mask)
                 
-                # Compute loss only for non-zero targets
-                mask = targets != 0
+                # Compute loss only for non-NaN targets (handle sparse labels)
+                mask = ~torch.isnan(targets)
                 if mask.sum() > 0:
                     loss = F.mse_loss(outputs[mask], targets[mask])
+                    
+                    # Check for NaN loss before backward
+                    if torch.isnan(loss):
+                        print(f"\n⚠️  NaN loss detected at epoch {epoch+1}. Skipping this batch.")
+                        continue
+                    
                     loss.backward()
                     
                     # Gradient clipping
@@ -205,6 +211,16 @@ class TransformerModel:
             
             # Validation
             val_loss, val_metrics = self.evaluate(val_loader)
+            
+            # Check for NaN validation loss
+            if math.isnan(val_loss):
+                print(f"\n⚠️  NaN validation loss at epoch {epoch+1}. Training may be unstable.")
+                print("Consider: 1) Lower learning rate, 2) Check input data, 3) Reduce batch size")
+                if self.best_model_state is None:
+                    print("No valid model state saved yet. Stopping training.")
+                    return float('inf')
+                break
+            
             scheduler.step(val_loss)
             
             if (epoch + 1) % 5 == 0:
@@ -221,9 +237,12 @@ class TransformerModel:
                     print(f"\nEarly stopping at epoch {epoch+1}")
                     break
         
-        # Load best model
-        self.model.load_state_dict(self.best_model_state)
-        print(f"\nBest validation loss: {best_val_loss:.4f}")
+        # Load best model if available
+        if self.best_model_state is not None:
+            self.model.load_state_dict(self.best_model_state)
+            print(f"\nBest validation loss: {best_val_loss:.4f}")
+        else:
+            print("\n⚠️  No valid model state was saved during training.")
         
         return best_val_loss
     
@@ -242,7 +261,7 @@ class TransformerModel:
                 
                 outputs = self.model(input_ids, attention_mask)
                 
-                mask = targets != 0
+                mask = ~torch.isnan(targets)
                 if mask.sum() > 0:
                     loss = F.mse_loss(outputs[mask], targets[mask])
                     total_loss += loss.item()
@@ -258,17 +277,20 @@ class TransformerModel:
         # Compute metrics per target
         metrics = {}
         for i in range(self.num_targets):
-            mask = all_targets[:, i] != 0
+            # Check for non-NaN values (not just non-zero)
+            mask = ~np.isnan(all_targets[:, i])
             if mask.sum() > 0:
                 y_true = all_targets[mask, i]
                 y_pred = all_preds[mask, i]
                 
-                metrics[f'target_{i}'] = {
-                    'mse': mean_squared_error(y_true, y_pred),
-                    'rmse': np.sqrt(mean_squared_error(y_true, y_pred)),
-                    'mae': mean_absolute_error(y_true, y_pred),
-                    'r2': r2_score(y_true, y_pred),
-                }
+                # Only compute if we have valid data
+                if len(y_true) > 0 and not np.isnan(y_pred).any():
+                    metrics[f'target_{i}'] = {
+                        'mse': mean_squared_error(y_true, y_pred),
+                        'rmse': np.sqrt(mean_squared_error(y_true, y_pred)),
+                        'mae': mean_absolute_error(y_true, y_pred),
+                        'r2': r2_score(y_true, y_pred) if len(np.unique(y_true)) > 1 else 0.0,
+                    }
         
         return avg_loss, metrics
     
