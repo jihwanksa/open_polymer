@@ -376,9 +376,21 @@ fingerprint = processor.compute_morgan_fingerprint(smiles, radius=2)
 
 ## 📚 Documentation
 
-- **[results/README.md](results/README.md)** - Complete analysis, metrics, and insights
-- **[src/README.md](src/README.md)** - Source code documentation and API reference  
-- **[models/README.md](models/README.md)** - Trained models and usage examples
+### Technical Documentation
+- **[results/README.md](results/README.md)** - Complete results analysis, metrics, and performance insights
+- **[src/README.md](src/README.md)** - Source code documentation, API reference, and usage examples
+- **[models/README.md](models/README.md)** - Trained model specifications, benchmarks, and usage guide
+- **[app/README.md](app/README.md)** - Interactive demo guide with screenshots
+
+### Research & Analysis
+- **[docs/RESULTS.md](docs/RESULTS.md)** - Comprehensive analysis of all 4 models with detailed metrics
+- **[docs/COMPLETION_SUMMARY.md](docs/COMPLETION_SUMMARY.md)** - Project summary and achievement overview
+
+### Business & Presentations
+- **[docs/VC_PITCH.md](docs/VC_PITCH.md)** - Full investor presentation deck (20+ slides)
+- **[docs/EXECUTIVE_SUMMARY.md](docs/EXECUTIVE_SUMMARY.md)** - One-page business overview for investors
+
+### Competition
 - **Competition:** [Kaggle NeurIPS 2025](https://www.kaggle.com/competitions/neurips-open-polymer-prediction-2025)
 
 ## 🛠️ Development
