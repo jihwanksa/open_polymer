@@ -64,7 +64,9 @@ A comprehensive machine learning framework for predicting polymer properties fro
 - Anaconda or Miniconda (recommended for RDKit)
 - CUDA-capable GPU (optional, for deep learning models)
 
-### Setup
+### Setup by Platform
+
+#### Linux / macOS
 
 ```bash
 # Clone the repository
@@ -81,9 +83,28 @@ conda install -c conda-forge rdkit -y
 # Install other dependencies
 pip install -r requirements.txt
 
-# Set library path (Linux/Mac)
+# Set library path (Linux/macOS only)
 export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 ```
+
+#### Windows
+
+```bash
+# Clone the repository
+git clone https://github.com/jihwanksa/open_polymer.git
+cd open_polymer
+
+# Open Anaconda Prompt and run:
+conda create -n polymer_pred python=3.10 -y
+conda activate polymer_pred
+conda install -c conda-forge rdkit -y
+pip install -r requirements.txt
+
+# Or use the setup script:
+scripts\setup_windows.bat
+```
+
+**Note:** Windows users don't need to set `LD_LIBRARY_PATH`. All Python code is cross-platform compatible!
 
 ### Dependencies
 
@@ -107,10 +128,14 @@ python data_preprocessing.py
 
 ```bash
 # Train all models (traditional ML)
-python train.py
+python src/train.py
 
-# Or use the convenience script
+# Or use the convenience script:
+# Linux/macOS:
 bash scripts/run_training.sh
+
+# Windows:
+scripts\run_training.bat
 ```
 
 ### 3. View Results
