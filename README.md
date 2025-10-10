@@ -77,11 +77,13 @@ A comprehensive machine learning framework for predicting polymer properties fro
 
 - Python 3.10+
 - Anaconda or Miniconda (recommended for RDKit)
-- CUDA-capable GPU (optional, for deep learning models)
+- CUDA-capable GPU (optional, for faster deep learning training - Linux only)
+
+**Note:** Everything works on CPU! GPU only speeds up GNN and Transformer training.
 
 ### Setup by Platform
 
-#### Linux / macOS
+#### Linux
 
 ```bash
 # Clone the repository
@@ -98,9 +100,40 @@ conda install -c conda-forge rdkit -y
 # Install other dependencies
 pip install -r requirements.txt
 
-# Set library path (Linux/macOS only)
+# Set library path (Linux only)
 export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 ```
+
+#### macOS
+
+```bash
+# Clone the repository
+git clone https://github.com/jihwanksa/open_polymer.git
+cd open_polymer
+
+# Create conda environment
+conda create -n polymer_pred python=3.10 -y
+conda activate polymer_pred
+
+# Install RDKit (must use conda)
+conda install -c conda-forge rdkit -y
+
+# Install PyTorch (CPU version for Mac)
+pip install torch==2.1.2
+
+# Install other dependencies (skip CUDA-specific packages)
+pip install pandas numpy scikit-learn xgboost matplotlib seaborn
+pip install rdkit-pypi tqdm joblib transformers gradio pillow
+
+# For torch-geometric (optional, for GNN models)
+pip install torch-geometric
+```
+
+**Note for Mac users:** 
+- Macs don't support NVIDIA CUDA, so deep learning models (GNN, Transformer) will run on CPU
+- Traditional ML models (XGBoost, Random Forest) work perfectly on CPU ✅
+- Deep learning training will be slower but functional
+- The web demo works great on Mac!
 
 #### Windows
 
@@ -123,9 +156,19 @@ pip install -r requirements.txt
 - **Chemistry:** RDKit
 - **Traditional ML:** scikit-learn, XGBoost
 - **Deep Learning:** PyTorch, PyTorch Geometric, Transformers
+- **GPU Support:** torch-scatter, torch-sparse (for PyTorch Geometric)
+- **Web Interface:** Gradio, Pillow
 - **Utilities:** pandas, numpy, matplotlib, seaborn
 
 See [`requirements.txt`](requirements.txt) for full list.
+
+**Note for Linux GPU users:** If you encounter issues with `torch-scatter` or `torch-sparse`, install them separately:
+```bash
+pip install torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-2.1.2+cu121.html
+# Replace cu121 with your CUDA version (cu118, cu121, etc.)
+```
+
+**Mac users:** Skip torch-scatter and torch-sparse (not compatible with Mac)
 
 ## 🎓 Quick Start
 
@@ -146,15 +189,17 @@ python app/app.py
 ### 2. Train Models
 
 ```bash
-# Traditional ML (5-7 min on CPU)
+# Traditional ML (5-7 min on CPU) - Works on all platforms ✅
 python src/train.py
 
-# GNN (30 sec with GPU)
+# GNN (30 sec with GPU, ~10 min on CPU) - Mac: CPU only
 python src/train_gnn_tuned.py
 
-# Transformer (22 min with GPU)
+# Transformer (22 min with GPU, ~2-3 hours on CPU) - Mac: CPU only
 python src/train_transformer.py
 ```
+
+**For Mac users:** All models work on CPU! Traditional ML models are recommended (fast on CPU).
 
 ### 3. View Results
 
