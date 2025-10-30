@@ -11,7 +11,8 @@
   "dataset_sources": [
     "wpixiu/rdkit-2025-3-3-cp311",
     "minatoyukinaxlisa/tc-smiles",
-    "akihiroorita/tg-of-polymer-dataset"
+    "akihiroorita/tg-of-polymer-dataset",
+    "jihwano/raw-data-density"
   ],
   "competition_sources": [
     "neurips-open-polymer-prediction-2025"

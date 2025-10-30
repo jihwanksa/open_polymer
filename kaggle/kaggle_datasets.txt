@@ -1,0 +1,8 @@
+# Kaggle Input Datasets
+# List all datasets you've added to your Kaggle notebook, one per line
+# Lines starting with # are ignored
+
+wpixiu/rdkit-2025-3-3-cp311
+minatoyukinaxlisa/tc-smiles
+akihiroorita/tg-of-polymer-dataset
+jihwano/raw-data-density
