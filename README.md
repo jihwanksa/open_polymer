@@ -24,6 +24,16 @@ python kaggle/kaggle_automate.py "Your message"
 
 **Key insight:** On small datasets, simplicity + more data wins. 10 features + 7x Tg samples > complex features.
 
+## Score Progress (Empirical)
+
+| Version | Configuration | Score | Change |
+|---------|---------------|-------|--------|
+| v1 | Original data only | 0.139 | Baseline |
+| v2 | + Tc dataset (Tc-SMILES) | 0.092 | ↓ 33.8% |
+| v3 | + Tg dataset (TG-of-Polymer) | 0.085 | ↓ 7.6% |
+| v4 | + Density (PI1070) | 0.088 | Reverted ⚠️ |
+| **v5** | **+ Tc +Tg +Rg +LAMALAB (7,369 Tg)** | **0.083** | **↓ 2.4% ✅** |
+
 ## Setup
 
 ```bash
