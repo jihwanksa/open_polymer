@@ -2,7 +2,7 @@
 
 **Polymer property prediction using simple features + external data + Kaggle automation.**
 
-Score: **0.085 (Private) | 0.100 (Public)** | Time: ~50 seconds per submission
+🏆 **Score: 0.083 (Private) | 10th Place | 0.100 (Public)** | Time: ~50 seconds per submission
 
 ## TL;DR
 
@@ -18,11 +18,11 @@ python kaggle/kaggle_automate.py "Your message"
 | What | Why | Result |
 |------|-----|--------|
 | **10 simple features** | Prevent overfitting on 500-700 samples | 2.35x better than 1037 features |
-| **External data** | 511→2,447 Tg samples, 737→867 Tc samples | +7.7% improvement |
+| **Massive external data** | Tg: 511→2,447 (+380%), Density: 613→1,394 (+127%) | +2% improvement (0.085→0.083) |
 | **Tg transformation** | Fix train/test distribution shift: (9/5)×x+45 | +30% improvement |
 | **MAE objective** | Match competition metric exactly | +5-15% improvement |
 
-**Key insight:** On small datasets, simplicity wins. 10 features > 1037 features (proved empirically).
+**Key insight:** On small datasets, simplicity + more data wins. 10 features + 7x Tg samples > complex features.
 
 ## Setup
 
@@ -36,13 +36,13 @@ pip install -r requirements.txt
 ## Workflow
 
 ### Standard Iteration (no new datasets)
-1. **Edit notebook:** `polymer-v2-enhanced-tc-tg-augmentation.ipynb`
+1. **Edit notebook:** `polymer-v32-enhanced-tc-tg-augmentation.ipynb`
 2. **Submit:** `python kaggle/kaggle_automate.py "v25: your change"`
 3. **Get score:** Check terminal output in ~3 minutes
 
 ### When Adding New Datasets
 1. **Add datasets in Kaggle notebook UI** (Add Input section)
-2. **Update metadata:** `python kaggle/sync_metadata.py`
+2. **Update metadata:** Edit `kernel-metadata.json` to include new dataset slug
 3. **Submit:** `python kaggle/kaggle_automate.py "v26: added new data"`
 4. **Get score:** ~3 minutes
 
@@ -52,10 +52,10 @@ That's it!
 
 | File | Purpose |
 |------|---------|
-| `polymer-v2-enhanced-tc-tg-augmentation.ipynb` | Working notebook (2K lines) |
+| `polymer-v32-enhanced-tc-tg-augmentation.ipynb` | Working notebook (2K lines) |
 | `kaggle/kaggle_automate.py` | One-command automation |
 | `src/kaggle_solution.py` | Reusable solution classes |
-| `kaggle/sync_metadata.py` | Auto-update kernel-metadata.json |
+| `kernel-metadata.json` | Kaggle kernel configuration with datasets |
 
 ## Using Solution Code
 
@@ -75,20 +75,6 @@ predictions = solution.predict(X_test)
 predictions = solution.apply_tg_transformation(predictions)
 ```
 
-## Auto-Update Kernel Metadata
-
-Instead of manually editing `kernel-metadata.json`:
-
-```bash
-# Update datasets list (after adding new inputs to Kaggle notebook)
-python kaggle/sync_metadata.py
-```
-
-This script:
-- Lists the datasets used by the kernel
-- Updates kernel-metadata.json with one command
-- Minimal manual work needed
-
 ## Key Learnings
 
 ### Why Simple Beats Complex
@@ -102,9 +88,23 @@ This script:
 - Result: Memorize training data, fail on test
 
 ### Domain > Engineering
-- External data: +7.7%
+- External Tg data: +2% (0.085→0.083) ← **Won the competition**
 - Better features: +0%
-- Understanding Tg shift: +30% ← **This won the competition**
+- Understanding Tg shift: +30%
+
+### Data Augmentation Details
+**External datasets used:**
+1. **Tc-SMILES** (minatoyukinaxlisa) - Tc crystallization temp
+2. **TG-of-Polymer** (akihiroorita) - Tg glass transition temp
+3. **PI1070.csv** - Density & Rg from simulations
+4. **LAMALAB_curated** - Experimental Tg from literature (7,369 samples!)
+
+**Augmentation impact:**
+- Tg: 511 → 2,447 samples (+380%)
+- Density: 613 → 1,394 samples (+127%)
+- Rg: 614 → 1,684 samples (+174%)
+- Tc: 737 → 867 samples (+18%)
+- Total: 10,039 → 10,820 training samples (+7.7%)
 
 ### Metric Alignment Matters
 - Competition uses wMAE (weighted Mean Absolute Error)
@@ -113,33 +113,33 @@ This script:
 
 ## Performance
 
-- **Private:** 0.085 ⭐
+- **Private:** 0.083 ⭐ (10th place)
 - **Public:** 0.100
 - **Training time:** 48-64 seconds per submission
-- **Generalization:** 0.1% CV-test gap (excellent)
+- **Generalization:** 0.017 private-public gap (excellent)
 
 ## Next
 
 - Try new hyperparameters: `python kaggle/kaggle_automate.py "try lr=0.03"`
 - Test different Tg transforms: `python kaggle/kaggle_automate.py "test (9/5)*x+50"`
-- Add new datasets: Use `sync_metadata.py` to auto-update
+- Add new datasets: Update `kernel-metadata.json` dataset_sources
 
 ## Architecture
 
 ```
 XGBoost (separate models for each property)
-├─ Tg (glass transition temp)
-├─ FFV (free volume fraction)
-├─ Tc (crystallization temp)
-├─ Density
-└─ Rg (radius of gyration)
+├─ Tg (glass transition temp) - 2,447 samples (22.6%)
+├─ FFV (free volume fraction) - 7,030 samples (65.0%)
+├─ Tc (crystallization temp) - 867 samples (8.0%)
+├─ Density - 1,394 samples (12.9%)
+└─ Rg (radius of gyration) - 1,684 samples (15.5%)
 
 Features: 10 simple SMILES-based
 - smiles_length, carbon_count, nitrogen_count, oxygen_count
 - sulfur_count, fluorine_count, ring_count, double_bond_count
 - triple_bond_count, branch_count
 
-Training: 10,039 samples (7,973 original + 2,066 augmented)
+Training: 10,820 samples (7,973 original + 2,847 augmented)
 Objective: MAE (matches wMAE metric)
 ```
 
@@ -149,13 +149,13 @@ Objective: MAE (matches wMAE metric)
 # Submit
 python kaggle/kaggle_automate.py "message"
 
-# Auto-update kernel metadata
-python kaggle/sync_metadata.py
-
 # Check Kaggle API
 kaggle competitions submissions -c neurips-open-polymer-prediction-2025 --csv
+
+# View kernel metadata
+cat kernel-metadata.json
 ```
 
 ---
 
-**Status:** Production ready | **Last Updated:** Oct 30, 2025 | **Score:** 0.085 (Private)
+**Status:** Production ready | **Last Updated:** Oct 31, 2025 | **Score:** 0.083 (Private, 10th place)
