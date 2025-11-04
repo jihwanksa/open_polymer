@@ -1,0 +1,182 @@
+
+======================================================================
+🚀 KAGGLE NOTEBOOK AUTOMATION
+======================================================================
+
+======================================================================
+▶ Pushing notebook to Kaggle...
+======================================================================
+Kernel version 17 successfully pushed.  Please check progress at https://www.kaggle.com/code/jihwano/polymer-v2-enhanced-tc-tg-augmentation
+
+✅ Notebook pushed successfully!
+
+⏳ Waiting for notebook execution...
+jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [0s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [15s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [31s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [46s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [61s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [76s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [92s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [107s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [122s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [138s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [153s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [168s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [184s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [199s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [214s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [230s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [245s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [260s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [276s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [291s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [306s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [322s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [337s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [352s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [368s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [383s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [398s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [413s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [429s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.RUNNING"
+
+  [444s] Still running...jihwano/polymer-v2-enhanced-tc-tg-augmentation has status "KernelWorkerStatus.COMPLETE"
+
+✅ Notebook execution complete!
+
+📥 Downloading notebook output...
+
+======================================================================
+▶ Downloading execution logs and submission file...
+======================================================================
+Output file downloaded to ./submission.csv
+Kernel log downloaded to ./polymer-v2-enhanced-tc-tg-augmentation.log 
+
+✅ Output downloaded successfully!
+
+📋 KERNEL LOG (last 50 lines):
+======================================================================
+,{"stream_name":"stdout","time":34.300643961,"data":"  Tg: [134.6190, 180.7068], mean: 163.5432\n"}
+,{"stream_name":"stdout","time":34.300648048,"data":"  FFV: [0.3570, 0.3819], mean: 0.3680\n"}
+,{"stream_name":"stdout","time":34.30065198,"data":"  Tc: [0.2147, 0.2557], mean: 0.2289\n"}
+,{"stream_name":"stdout","time":34.30090441,"data":"  Density: [1.0794, 1.1240], mean: 1.1084\n"}
+,{"stream_name":"stdout","time":34.300922809,"data":"  Rg: [18.8675, 20.5637], mean: 19.6628\n"}
+,{"stream_name":"stdout","time":34.389825916,"data":"Creating submission...\n"}
+,{"stream_name":"stdout","time":34.389851356,"data":"\n"}
+,{"stream_name":"stdout","time":34.389857261,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":34.389862651,"data":"APPLYING TG TRANSFORMATION (2nd Place Discovery)\n"}
+,{"stream_name":"stdout","time":34.389867174,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":34.389871974,"data":"Original Tg range: [134.62, 180.71]\n"}
+,{"stream_name":"stdout","time":34.389876872,"data":"Original Tg mean: 163.54\n"}
+,{"stream_name":"stdout","time":34.38988132,"data":"Transformed Tg range: [287.31, 370.27]\n"}
+,{"stream_name":"stdout","time":34.389886205,"data":"Transformed Tg mean: 339.38\n"}
+,{"stream_name":"stdout","time":34.389890804,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":34.389896589,"data":"\n"}
+,{"stream_name":"stdout","time":34.389901078,"data":"Submission validation:\n"}
+,{"stream_name":"stdout","time":34.389904238,"data":"Shape: (3, 6)\n"}
+,{"stream_name":"stdout","time":34.389907389,"data":"Columns: ['id', 'Tg', 'FFV', 'Tc', 'Density', 'Rg']\n"}
+,{"stream_name":"stdout","time":34.389910462,"data":"Any NaN: False\n"}
+,{"stream_name":"stdout","time":34.389924272,"data":"Any inf: False\n"}
+,{"stream_name":"stdout","time":34.389927222,"data":"\n"}
+,{"stream_name":"stdout","time":34.389930151,"data":"Submission preview:\n"}
+,{"stream_name":"stdout","time":34.389933221,"data":"           id          Tg       FFV        Tc   Density         Rg\n"}
+,{"stream_name":"stdout","time":34.389936414,"data":"0  1109053969  370.272299  0.365158  0.214725  1.121802  20.563723\n"}
+,{"stream_name":"stdout","time":34.389939661,"data":"1  1422188626  360.546680  0.381892  0.216364  1.079396  19.557114\n"}
+,{"stream_name":"stdout","time":34.389943191,"data":"2  2032016830  287.314124  0.357027  0.255739  1.124029  18.867483\n"}
+,{"stream_name":"stdout","time":34.389947597,"data":"\n"}
+,{"stream_name":"stdout","time":34.389952265,"data":"Submission statistics:\n"}
+,{"stream_name":"stdout","time":34.389956717,"data":"               Tg       FFV        Tc   Density         Rg\n"}
+,{"stream_name":"stdout","time":34.389961422,"data":"count    3.000000  3.000000  3.000000  3.000000   3.000000\n"}
+,{"stream_name":"stdout","time":34.389966195,"data":"mean   339.377701  0.368025  0.228943  1.108409  19.662773\n"}
+,{"stream_name":"stdout","time":34.389970459,"data":"std     45.349851  0.012678  0.023221  0.025151   0.853042\n"}
+,{"stream_name":"stdout","time":34.389975394,"data":"min    287.314124  0.357027  0.214725  1.079396  18.867483\n"}
+,{"stream_name":"stdout","time":34.389980074,"data":"25%    323.930402  0.361092  0.215545  1.100599  19.212298\n"}
+,{"stream_name":"stdout","time":34.389984831,"data":"50%    360.546680  0.365158  0.216364  1.121802  19.557114\n"}
+,{"stream_name":"stdout","time":34.389989518,"data":"75%    365.409489  0.373525  0.236051  1.122915  20.060418\n"}
+,{"stream_name":"stdout","time":34.389994295,"data":"max    370.272299  0.381892  0.255739  1.124029  20.563723\n"}
+,{"stream_name":"stdout","time":34.389999085,"data":"\n"}
+,{"stream_name":"stdout","time":34.390003579,"data":"✅ Submission saved to submission.csv successfully!\n"}
+,{"stream_name":"stdout","time":34.390050377,"data":"   Includes Tg transformation for improved leaderboard performance.\n"}
+,{"stream_name":"stderr","time":39.836795348,"data":"/usr/local/lib/python3.11/dist-packages/traitlets/traitlets.py:2915: FutureWarning: --Exporter.preprocessors=[\"remove_papermill_header.RemovePapermillHeader\"] for containers is deprecated in traitlets 5.0. You can pass `--Exporter.preprocessors item` ... multiple times to add items to a list.\n"}
+,{"stream_name":"stderr","time":39.836843504,"data":"  warn(\n"}
+,{"stream_name":"stderr","time":39.886209792,"data":"[NbConvertApp] Converting notebook __notebook__.ipynb to notebook\n"}
+,{"stream_name":"stderr","time":40.337185099,"data":"[NbConvertApp] Writing 81531 bytes to __notebook__.ipynb\n"}
+,{"stream_name":"stderr","time":44.150256638,"data":"/usr/local/lib/python3.11/dist-packages/traitlets/traitlets.py:2915: FutureWarning: --Exporter.preprocessors=[\"nbconvert.preprocessors.ExtractOutputPreprocessor\"] for containers is deprecated in traitlets 5.0. You can pass `--Exporter.preprocessors item` ... multiple times to add items to a list.\n"}
+,{"stream_name":"stderr","time":44.150301311,"data":"  warn(\n"}
+,{"stream_name":"stderr","time":44.192469366,"data":"[NbConvertApp] Converting notebook __notebook__.ipynb to html\n"}
+,{"stream_name":"stderr","time":45.490447189,"data":"[NbConvertApp] Writing 470333 bytes to __results__.html\n"}
+]
+
+📤 Submitting to competition: First automation test
+
+======================================================================
+▶ Submitting predictions...
+======================================================================
+400 Client Error: Bad Request for url: https://www.kaggle.com/api/v1/competitions/submissions/submit/neurips-open-polymer-prediction-2025
+
+⚠️  
+  0%|          | 0.00/338 [00:00<?, ?B/s]
+100%|██████████| 338/338 [00:00<00:00, 476B/s]
+
+⚠️  Submission may have issues (API sometimes returns error even on success)
+
+⏳ Waiting for Kaggle to score submission (usually 1-2 minutes)...
+fileName,date,description,status,publicScore,privateScore
+submission.csv,2025-10-27 21:57:03.103000,,SubmissionStatus.COMPLETE,0.100,0.085
+submission.csv,2025-10-27 21:39:38.413000,,SubmissionStatus.COMPLETE,0.101,0.092
+submission.csv,2025-10-27 20:49:43.773000,,SubmissionStatus.COMPLETE,0.134,0.139
+submission.csv,2025-10-27 20:43:50.193000,,SubmissionStatus.COMPLETE,0.101,0.092
+submission.csv,2025-10-17 20:54:16,,SubmissionStatus.COMPLETE,0.102,0.092
+submission.csv,2025-10-17 17:01:00.023000,,SubmissionStatus.COMPLETE,0.107,0.096
+
+
+✅ SCORES RECEIVED!
+
+======================================================================
+SUBMISSION RESULTS:
+======================================================================
+fileName,date,description,status,publicScore,privateScore
+----------------------------------------------------------------------
+submission.csv,2025-10-27 21:57:03.103000,,SubmissionStatus.COMPLETE,0.100,0.085
+
+Previous submissions:
+submission.csv,2025-10-27 21:39:38.413000,,SubmissionStatus.COMPLETE,0.101,0.092
+submission.csv,2025-10-27 20:49:43.773000,,SubmissionStatus.COMPLETE,0.134,0.139
+submission.csv,2025-10-27 20:43:50.193000,,SubmissionStatus.COMPLETE,0.101,0.092
+submission.csv,2025-10-17 20:54:16,,SubmissionStatus.COMPLETE,0.102,0.092
+submission.csv,2025-10-17 17:01:00.023000,,SubmissionStatus.COMPLETE,0.107,0.096
+
+======================================================================
+✅ AUTOMATION COMPLETE!
+======================================================================

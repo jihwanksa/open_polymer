@@ -35,7 +35,6 @@ env/
 
 # Jupyter Notebook
 .ipynb_checkpoints
-*.ipynb
 
 # IDEs
 .vscode/
@@ -61,9 +60,8 @@ data/processed/
 # Results
 results_archive/
 
-# Logs
-*.log
-logs/
+# Logs (keeping .log files but including logs/ folder)
+# *.log
 
 # Temporary files
 tmp/

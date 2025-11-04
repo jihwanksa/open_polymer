@@ -1,6 +1,6 @@
 # Open Polymer - Kaggle Competition Summary
 
-## 🎯 Project Status
+##🎯 Project Status
 
 **Current Score**: `0.083` (Private) | **Rank**: 10th Place | **Public Score**: `0.100`  
 **Competition**: Kaggle - Polymer Properties Prediction  

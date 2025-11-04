@@ -1,0 +1,279 @@
+[{"stream_name":"stderr","time":8.668363931,"data":"0.00s - Debugger warning: It seems that frozen modules are being used, which may\n"}
+,{"stream_name":"stderr","time":8.668438890000001,"data":"0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off\n"}
+,{"stream_name":"stderr","time":8.668446408,"data":"0.00s - to python to disable frozen modules.\n"}
+,{"stream_name":"stderr","time":8.66845182,"data":"0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.\n"}
+,{"stream_name":"stderr","time":9.37230915,"data":"0.00s - Debugger warning: It seems that frozen modules are being used, which may\n"}
+,{"stream_name":"stderr","time":9.372352136,"data":"0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off\n"}
+,{"stream_name":"stderr","time":9.372358598,"data":"0.00s - to python to disable frozen modules.\n"}
+,{"stream_name":"stderr","time":9.372363378,"data":"0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.\n"}
+,{"stream_name":"stdout","time":12.673103924,"data":"Installing RDKit from wheel...\n"}
+,{"stream_name":"stdout","time":12.673150079,"data":"✓ Found wheel: /kaggle/input/d/wpixiu/rdkit-2025-3-3-cp311/rdkit-2025.3.3-cp311-cp311-manylinux_2_28_x86_64.whl\n"}
+,{"stream_name":"stdout","time":19.381953702,"data":"✓ RDKit installed from wheel successfully\n"}
+,{"stream_name":"stdout","time":23.841606946,"data":"\n"}
+,{"stream_name":"stdout","time":23.841639416,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":23.841645982,"data":"FEATURE STRATEGY: SIMPLE FEATURES ONLY (v2 approach)\n"}
+,{"stream_name":"stdout","time":23.841650868,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":23.841655143,"data":"✓ Using 10 simple string-based features\n"}
+,{"stream_name":"stdout","time":23.841676879,"data":"✗ NOT using complex RDKit descriptors (13 features)\n"}
+,{"stream_name":"stdout","time":23.841681324,"data":"✗ NOT using molecular fingerprints (1024 features)\n"}
+,{"stream_name":"stdout","time":23.841685496,"data":"Reason: Simple features generalize better for this competition!\n"}
+,{"stream_name":"stdout","time":23.841690179,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":23.841694396,"data":"\n"}
+,{"stream_name":"stdout","time":23.841702603,"data":"Setup complete!\n"}
+,{"stream_name":"stdout","time":23.939975678,"data":"Data loaded from Kaggle input\n"}
+,{"stream_name":"stdout","time":23.940013036,"data":"Train shape: (7973, 7)\n"}
+,{"stream_name":"stdout","time":23.940019757,"data":"Test shape: (3, 2)\n"}
+,{"stream_name":"stdout","time":23.940022929,"data":"Sample submission shape: (3, 6)\n"}
+,{"stream_name":"stdout","time":23.940026943,"data":"\n"}
+,{"stream_name":"stdout","time":23.940031305,"data":"Target availability:\n"}
+,{"stream_name":"stdout","time":23.940038018,"data":"Tg: 511 samples (6.4%)\n"}
+,{"stream_name":"stdout","time":23.940042356,"data":"FFV: 7030 samples (88.2%)\n"}
+,{"stream_name":"stdout","time":23.940047258,"data":"Tc: 737 samples (9.2%)\n"}
+,{"stream_name":"stdout","time":23.940052529,"data":"Density: 613 samples (7.7%)\n"}
+,{"stream_name":"stdout","time":23.940057356,"data":"Rg: 614 samples (7.7%)\n"}
+,{"stream_name":"stdout","time":23.983783552,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":23.983815683,"data":"CANONICALIZING SMILES\n"}
+,{"stream_name":"stdout","time":23.983821859,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":23.983844799,"data":"Applying SMILES canonicalization...\n"}
+,{"stream_name":"stdout","time":23.983849571,"data":"Train: 0/7973 successfully canonicalized (0.0%)\n"}
+,{"stream_name":"stdout","time":23.983854209,"data":"Test: 0/3 successfully canonicalized (0.0%)\n"}
+,{"stream_name":"stdout","time":23.983858229,"data":"✓ SMILES canonicalization complete!\n"}
+,{"stream_name":"stdout","time":23.983863233,"data":"\n"}
+,{"stream_name":"stdout","time":23.983867647,"data":"Example canonical SMILES:\n"}
+,{"stream_name":"stdout","time":23.98387172,"data":"['*CC(*)c1ccccc1C(=O)OCCCCCC', '*Nc1ccc([C@H](CCC)c2ccc(C3(c4ccc([C@@H](CCC)c5ccc(N*)cc5)cc4)CCC(CCCCC)CC3)cc2)cc1', '*Oc1ccc(S(=O)(=O)c2ccc(Oc3ccc(C4(c5ccc(Oc6ccc(S(=O)(=O)c7ccc(Oc8ccc(C=C9CCCC(=Cc%10ccc(*)cc%10)C9=O)cc8)cc7)cc6)cc5)CCCCC4)cc3)cc2)cc1']\n"}
+,{"stream_name":"stdout","time":23.983881665,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":23.983885873,"data":"\n"}
+,{"stream_name":"stdout","time":24.059210213,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":24.059245549,"data":"LOADING EXTERNAL Tc DATASET\n"}
+,{"stream_name":"stdout","time":24.059252398,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":24.059281639,"data":"Loaded from: /kaggle/input/tc-smiles/Tc_SMILES.csv\n"}
+,{"stream_name":"stdout","time":24.059288095,"data":"✓ Loaded external Tc dataset: 874 samples\n"}
+,{"stream_name":"stdout","time":24.059295335,"data":"Columns: ['TC_mean', 'SMILES']\n"}
+,{"stream_name":"stdout","time":24.059301421,"data":"\n"}
+,{"stream_name":"stdout","time":24.059307168,"data":"Sample data:\n"}
+,{"stream_name":"stdout","time":24.059313286,"data":"    TC_mean       SMILES\n"}
+,{"stream_name":"stdout","time":24.059319152,"data":"0  0.244500      *CC(*)C\n"}
+,{"stream_name":"stdout","time":24.059324667,"data":"1  0.225333     *CC(*)CC\n"}
+,{"stream_name":"stdout","time":24.059329869,"data":"2  0.246333    *CC(*)CCC\n"}
+,{"stream_name":"stdout","time":24.059335436,"data":"3  0.186800  *CC(*)C(C)C\n"}
+,{"stream_name":"stdout","time":24.059340804,"data":"4  0.230667   *CC(*)CCCC\n"}
+,{"stream_name":"stdout","time":24.059346507,"data":"\n"}
+,{"stream_name":"stdout","time":24.059352093,"data":"Canonicalizing external SMILES...\n"}
+,{"stream_name":"stdout","time":24.059358127,"data":"External Tc: 0/874 successfully canonicalized (0.0%)\n"}
+,{"stream_name":"stdout","time":24.059363845,"data":"\n"}
+,{"stream_name":"stdout","time":24.05936926,"data":"📊 Dataset overlap analysis:\n"}
+,{"stream_name":"stdout","time":24.059374735,"data":"Training SMILES: 7973\n"}
+,{"stream_name":"stdout","time":24.059380208,"data":"External SMILES: 867\n"}
+,{"stream_name":"stdout","time":24.05938574,"data":"Overlapping SMILES: 737\n"}
+,{"stream_name":"stdout","time":24.059391407,"data":"\n"}
+,{"stream_name":"stdout","time":24.05939673,"data":"Original training Tc samples: 737\n"}
+,{"stream_name":"stdout","time":24.065823671,"data":"New Tc samples to add: 130\n"}
+,{"stream_name":"stdout","time":24.065850614,"data":"\n"}
+,{"stream_name":"stdout","time":24.065856179,"data":"✅ AUGMENTATION COMPLETE!\n"}
+,{"stream_name":"stdout","time":24.065861396,"data":"Training set size: 7973 → 8103 (+130)\n"}
+,{"stream_name":"stdout","time":24.065865878,"data":"Tc samples: 737 → 867 (+130)\n"}
+,{"stream_name":"stdout","time":24.065887685,"data":"Tc improvement: 17.6% increase\n"}
+,{"stream_name":"stdout","time":24.065892463,"data":"\n"}
+,{"stream_name":"stdout","time":24.065896503,"data":"📈 Final training data statistics:\n"}
+,{"stream_name":"stdout","time":24.065900552,"data":"  Tg: 511 samples (6.3%)\n"}
+,{"stream_name":"stdout","time":24.065904367,"data":"  FFV: 7030 samples (86.8%)\n"}
+,{"stream_name":"stdout","time":24.065908676,"data":"  Tc: 867 samples (10.7%)\n"}
+,{"stream_name":"stdout","time":24.065912806,"data":"  Density: 613 samples (7.6%)\n"}
+,{"stream_name":"stdout","time":24.065917019,"data":"  Rg: 614 samples (7.6%)\n"}
+,{"stream_name":"stdout","time":24.065921041,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":24.065925847,"data":"\n"}
+,{"stream_name":"stdout","time":24.138933538,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":24.138971922,"data":"LOADING EXTERNAL Tg DATASET\n"}
+,{"stream_name":"stdout","time":24.138978161,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":24.220931796,"data":"✓ Loaded external Tg dataset: 7208 samples\n"}
+,{"stream_name":"stdout","time":24.220965487,"data":"Columns: ['SMILES', 'PID', 'Polymer Class', 'Tg']\n"}
+,{"stream_name":"stdout","time":24.220972118,"data":"\n"}
+,{"stream_name":"stdout","time":24.22097659,"data":"Sample data:\n"}
+,{"stream_name":"stdout","time":24.220983223,"data":"        SMILES      PID Polymer Class    Tg\n"}
+,{"stream_name":"stdout","time":24.220986448,"data":"0          *C*  P010001   Polyolefins -54.0\n"}
+,{"stream_name":"stdout","time":24.220989331,"data":"1      *CC(*)C  P010002   Polyolefins  -3.0\n"}
+,{"stream_name":"stdout","time":24.220992109,"data":"2     *CC(*)CC  P010003   Polyolefins -24.1\n"}
+,{"stream_name":"stdout","time":24.22099519,"data":"3    *CC(*)CCC  P010004   Polyolefins -37.0\n"}
+,{"stream_name":"stdout","time":24.220997935,"data":"4  *CC(*)C(C)C  P010006   Polyolefins  60.0\n"}
+,{"stream_name":"stdout","time":24.221000673,"data":"\n"}
+,{"stream_name":"stdout","time":24.221003302,"data":"Canonicalizing external SMILES...\n"}
+,{"stream_name":"stdout","time":24.221006172,"data":"External Tg: 0/7208 successfully canonicalized (0.0%)\n"}
+,{"stream_name":"stdout","time":24.221008992,"data":"\n"}
+,{"stream_name":"stdout","time":24.221011676,"data":"📊 Dataset overlap analysis:\n"}
+,{"stream_name":"stdout","time":24.221014566,"data":"Training SMILES: 8103\n"}
+,{"stream_name":"stdout","time":24.221017394,"data":"External SMILES: 7174\n"}
+,{"stream_name":"stdout","time":24.221020088,"data":"Overlapping SMILES: 5250\n"}
+,{"stream_name":"stdout","time":24.22102279,"data":"\n"}
+,{"stream_name":"stdout","time":24.221025455,"data":"Original training Tg samples: 511\n"}
+,{"stream_name":"stdout","time":24.221028245,"data":"New Tg samples to add: 1936\n"}
+,{"stream_name":"stdout","time":24.263017539,"data":"\n"}
+,{"stream_name":"stdout","time":24.263050253,"data":"✅ Tg AUGMENTATION COMPLETE!\n"}
+,{"stream_name":"stdout","time":24.26305693,"data":"Training set size: 8103 → 10039 (+1936)\n"}
+,{"stream_name":"stdout","time":24.2630638,"data":"Tg samples: 511 → 2447 (+1936)\n"}
+,{"stream_name":"stdout","time":24.263067189,"data":"Tg improvement: 378.9% increase\n"}
+,{"stream_name":"stdout","time":24.263070185,"data":"\n"}
+,{"stream_name":"stdout","time":24.263073654,"data":"📈 Final training data statistics:\n"}
+,{"stream_name":"stdout","time":24.265291442,"data":"  Tg: 2447 samples (24.4%)\n"}
+,{"stream_name":"stdout","time":24.265320219,"data":"  FFV: 7030 samples (70.0%)\n"}
+,{"stream_name":"stdout","time":24.265328013,"data":"  Tc: 867 samples (8.6%)\n"}
+,{"stream_name":"stdout","time":24.265342079,"data":"  Density: 613 samples (6.1%)\n"}
+,{"stream_name":"stdout","time":24.265346586,"data":"  Rg: 614 samples (6.1%)\n"}
+,{"stream_name":"stdout","time":24.265351635,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":24.265356816,"data":"\n"}
+,{"stream_name":"stdout","time":24.310683382,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":24.310715467,"data":"LOADING EXTERNAL DATASETS FOR AUGMENTATION\n"}
+,{"stream_name":"stdout","time":24.310722285,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":24.310727302,"data":"\n"}
+,{"stream_name":"stdout","time":24.310733752,"data":"[1] Loading PI1070.csv (Density + Rg)...\n"}
+,{"stream_name":"stdout","time":24.361019456,"data":"✓ Loaded 1077 samples\n"}
+,{"stream_name":"stdout","time":24.361055373,"data":"  Columns: ['monomer_ID', 'smiles', 'mol_weight_monomer', 'atomic_weight_mean', 'vdw_volume_monomer']... (truncated)\n"}
+,{"stream_name":"stdout","time":24.463036422,"data":"  New non-overlapping samples: 629\n"}
+,{"stream_name":"stdout","time":24.463068922,"data":"  Density values available: 629\n"}
+,{"stream_name":"stdout","time":24.463073471,"data":"  Rg values available: 629\n"}
+,{"stream_name":"stdout","time":24.463076553,"data":"\n"}
+,{"stream_name":"stdout","time":24.463079544,"data":"[2] Loading LAMALAB_CURATED_Tg_structured_polymerclass.csv...\n"}
+,{"stream_name":"stdout","time":24.560822941,"data":"✓ Loaded 7367 samples\n"}
+,{"stream_name":"stdout","time":24.563825059,"data":"  New non-overlapping samples: 7367\n"}
+,{"stream_name":"stdout","time":24.563853418,"data":"  Tg values available: 7367\n"}
+,{"stream_name":"stdout","time":24.563860414,"data":"  Tg range (°C): [-139.0, 495.0]\n"}
+,{"stream_name":"stdout","time":24.563866479,"data":"\n"}
+,{"stream_name":"stdout","time":24.563871183,"data":"[3] Augmenting training data...\n"}
+,{"stream_name":"stdout","time":25.446485557,"data":"✓ Added 629 PI1070 samples\n"}
+,{"stream_name":"stdout","time":33.649810368,"data":"✓ Added 7367 LAMALAB Tg samples\n"}
+,{"stream_name":"stdout","time":33.649848543,"data":"\n"}
+,{"stream_name":"stdout","time":33.649854681,"data":"📊 Training data augmented:\n"}
+,{"stream_name":"stdout","time":33.649860315,"data":"  Before: 10039 samples\n"}
+,{"stream_name":"stdout","time":33.649865137,"data":"  After: 18035 samples\n"}
+,{"stream_name":"stdout","time":33.6498699,"data":"  Net increase: +7996 samples (79.6%)\n"}
+,{"stream_name":"stdout","time":33.649874802,"data":"\n"}
+,{"stream_name":"stdout","time":33.649879477,"data":"📈 Updated target availability:\n"}
+,{"stream_name":"stdout","time":33.649883707,"data":"    Tg: 9814 samples (54.4%)\n"}
+,{"stream_name":"stdout","time":33.649888035000004,"data":"    FFV: 7030 samples (39.0%)\n"}
+,{"stream_name":"stdout","time":33.649893792,"data":"    Tc: 867 samples (4.8%)\n"}
+,{"stream_name":"stdout","time":33.649897402,"data":"    Density: 1242 samples (6.9%)\n"}
+,{"stream_name":"stdout","time":33.649900319,"data":"    Rg: 1243 samples (6.9%)\n"}
+,{"stream_name":"stdout","time":33.649903109,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":33.649942083,"data":"\n"}
+,{"stream_name":"stdout","time":33.717930309,"data":"⚠ RobustMolecularProcessor: Forcing simple features only (v2 strategy)\n"}
+,{"stream_name":"stdout","time":33.75145103,"data":"⚠ RobustMolecularProcessor: Forcing simple features only (v2 strategy)\n"}
+,{"stream_name":"stdout","time":33.751481826,"data":"✓ Feature processor initialized\n"}
+,{"stream_name":"stdout","time":33.818137593,"data":"Preparing training features...\n"}
+,{"stream_name":"stdout","time":33.818168738,"data":"Creating fallback SMILES-based features...\n"}
+,{"stream_name":"stdout","time":33.942670695,"data":"Created 18035 fallback feature vectors\n"}
+,{"stream_name":"stdout","time":33.942704788,"data":"RDKit not available, skipping fingerprints\n"}
+,{"stream_name":"stdout","time":33.942711087,"data":"Final combined features shape: (18035, 10)\n"}
+,{"stream_name":"stdout","time":33.942715732,"data":"Training features shape: (18035, 10)\n"}
+,{"stream_name":"stdout","time":33.942720794,"data":"Aligned samples: 18035\n"}
+,{"stream_name":"stdout","time":33.942725453,"data":"Final training set: 18035 samples with 10 features\n"}
+,{"stream_name":"stdout","time":33.942729981,"data":"Train: (14428, 10), Validation: (3607, 10)\n"}
+,{"stream_name":"stderr","time":33.943646993,"data":"\r  0%|          | 0/18035 [00:00\u003c?, ?it/s]\r100%|██████████| 18035/18035 [00:00\u003c00:00, 293101.70it/s]\n"}
+,{"stream_name":"stdout","time":34.019369561,"data":"Training XGBoost model...\n"}
+,{"stream_name":"stdout","time":34.019405309,"data":"\n"}
+,{"stream_name":"stdout","time":34.019410038,"data":"Training XGBoost Ensemble for Tg...\n"}
+,{"stream_name":"stdout","time":34.019414005,"data":"  Training 5 models with different random seeds...\n"}
+,{"stream_name":"stdout","time":41.357875755,"data":"  Individual model MAEs: 36.7764 ± 0.1225\n"}
+,{"stream_name":"stdout","time":41.357916051,"data":"  Ensemble MAE: 36.5372 (↓ 0.2392)\n"}
+,{"stream_name":"stdout","time":41.357922201,"data":"  Ensemble RMSE: 52.8158\n"}
+,{"stream_name":"stdout","time":41.357927384,"data":"  Ensemble R²: 0.7795\n"}
+,{"stream_name":"stdout","time":41.357933115,"data":"\n"}
+,{"stream_name":"stdout","time":41.35793804,"data":"Training XGBoost Ensemble for FFV...\n"}
+,{"stream_name":"stdout","time":41.357943159,"data":"  Training 5 models with different random seeds...\n"}
+,{"stream_name":"stdout","time":46.773193073,"data":"  Individual model MAEs: 0.0100 ± 0.0000\n"}
+,{"stream_name":"stdout","time":46.774286999,"data":"  Ensemble MAE: 0.0099 (↓ 0.0001)\n"}
+,{"stream_name":"stdout","time":46.77430338,"data":"  Ensemble RMSE: 0.0195\n"}
+,{"stream_name":"stdout","time":46.774308977,"data":"  Ensemble R²: 0.6043\n"}
+,{"stream_name":"stdout","time":46.774314619,"data":"\n"}
+,{"stream_name":"stdout","time":46.774319998,"data":"Training XGBoost Ensemble for Tc...\n"}
+,{"stream_name":"stdout","time":46.77432519,"data":"  Training 5 models with different random seeds...\n"}
+,{"stream_name":"stdout","time":49.043872097,"data":"  Individual model MAEs: 0.0322 ± 0.0004\n"}
+,{"stream_name":"stdout","time":49.043907409,"data":"  Ensemble MAE: 0.0317 (↓ 0.0004)\n"}
+,{"stream_name":"stdout","time":49.043913914,"data":"  Ensemble RMSE: 0.0427\n"}
+,{"stream_name":"stdout","time":49.04391912,"data":"  Ensemble R²: 0.7362\n"}
+,{"stream_name":"stdout","time":49.043924579,"data":"\n"}
+,{"stream_name":"stdout","time":49.04393004,"data":"Training XGBoost Ensemble for Density...\n"}
+,{"stream_name":"stdout","time":49.043935221,"data":"  Training 5 models with different random seeds...\n"}
+,{"stream_name":"stdout","time":51.749710696,"data":"  Individual model MAEs: 0.0527 ± 0.0008\n"}
+,{"stream_name":"stdout","time":51.749748117,"data":"  Ensemble MAE: 0.0522 (↓ 0.0004)\n"}
+,{"stream_name":"stdout","time":51.749755719,"data":"  Ensemble RMSE: 0.0871\n"}
+,{"stream_name":"stdout","time":51.749760779,"data":"  Ensemble R²: 0.7501\n"}
+,{"stream_name":"stdout","time":51.749766368,"data":"\n"}
+,{"stream_name":"stdout","time":51.749771366,"data":"Training XGBoost Ensemble for Rg...\n"}
+,{"stream_name":"stdout","time":51.749776444,"data":"  Training 5 models with different random seeds...\n"}
+,{"stream_name":"stdout","time":54.034724262,"data":"  Individual model MAEs: 2.0922 ± 0.0299\n"}
+,{"stream_name":"stdout","time":54.0347575,"data":"  Ensemble MAE: 2.0745 (↓ 0.0177)\n"}
+,{"stream_name":"stdout","time":54.034763344,"data":"  Ensemble RMSE: 3.0730\n"}
+,{"stream_name":"stdout","time":54.034768236,"data":"  Ensemble R²: 0.5550\n"}
+,{"stream_name":"stdout","time":54.034773683,"data":"\n"}
+,{"stream_name":"stdout","time":54.034778737,"data":"XGBoost Training Results:\n"}
+,{"stream_name":"stdout","time":54.034783616,"data":"Tg: RMSE=52.8158, MAE=36.5372, R²=0.7795\n"}
+,{"stream_name":"stdout","time":54.034788435,"data":"FFV: RMSE=0.0195, MAE=0.0099, R²=0.6043\n"}
+,{"stream_name":"stdout","time":54.034793319,"data":"Tc: RMSE=0.0427, MAE=0.0317, R²=0.7362\n"}
+,{"stream_name":"stdout","time":54.034798191,"data":"Density: RMSE=0.0871, MAE=0.0522, R²=0.7501\n"}
+,{"stream_name":"stdout","time":54.034803067,"data":"Rg: RMSE=3.0730, MAE=2.0745, R²=0.5550\n"}
+,{"stream_name":"stdout","time":54.076369868,"data":"Preparing test features...\n"}
+,{"stream_name":"stdout","time":54.076419828,"data":"Creating fallback SMILES-based features...\n"}
+,{"stream_name":"stdout","time":54.084834217,"data":"Created 3 fallback feature vectors\n"}
+,{"stream_name":"stdout","time":54.084859559,"data":"RDKit not available, skipping fingerprints\n"}
+,{"stream_name":"stdout","time":54.084864978,"data":"Final combined features shape: (3, 10)\n"}
+,{"stream_name":"stdout","time":54.084869322,"data":"Test features shape: (3, 10)\n"}
+,{"stream_name":"stdout","time":54.084873725,"data":"Common features: 10\n"}
+,{"stream_name":"stdout","time":54.084878404,"data":"Final test features shape: (3, 10)\n"}
+,{"stream_name":"stderr","time":54.085659259,"data":"\r  0%|          | 0/3 [00:00\u003c?, ?it/s]\r100%|██████████| 3/3 [00:00\u003c00:00, 29059.84it/s]\n"}
+,{"stream_name":"stdout","time":54.131882351,"data":"Generating predictions...\n"}
+,{"stream_name":"stdout","time":54.131908537,"data":"Predicted Tg: range [118.5532, 194.2116] (ensemble of 5 models)\n"}
+,{"stream_name":"stdout","time":54.131913085,"data":"Predicted FFV: range [0.3561, 0.3807] (ensemble of 5 models)\n"}
+,{"stream_name":"stdout","time":54.131917052,"data":"Predicted Tc: range [0.2078, 0.2729] (ensemble of 5 models)\n"}
+,{"stream_name":"stdout","time":54.131920977,"data":"Predicted Density: range [1.1149, 1.3004] (ensemble of 5 models)\n"}
+,{"stream_name":"stdout","time":54.131925602,"data":"Predicted Rg: range [22.5134, 28.4673] (ensemble of 5 models)\n"}
+,{"stream_name":"stdout","time":54.131930769,"data":"Predictions shape: (3, 5)\n"}
+,{"stream_name":"stdout","time":54.131935878,"data":"Prediction summary:\n"}
+,{"stream_name":"stdout","time":54.131940622,"data":"  Tg: [118.5532, 194.2116], mean: 164.2521\n"}
+,{"stream_name":"stdout","time":54.131945585,"data":"  FFV: [0.3561, 0.3807], mean: 0.3677\n"}
+,{"stream_name":"stdout","time":54.131970584,"data":"  Tc: [0.2078, 0.2729], mean: 0.2310\n"}
+,{"stream_name":"stdout","time":54.131975207,"data":"  Density: [1.1149, 1.3004], mean: 1.1900\n"}
+,{"stream_name":"stdout","time":54.131979173,"data":"  Rg: [22.5134, 28.4673], mean: 25.6776\n"}
+,{"stream_name":"stdout","time":54.211009012,"data":"Creating submission...\n"}
+,{"stream_name":"stdout","time":54.211037432,"data":"\n"}
+,{"stream_name":"stdout","time":54.211043706,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":54.211049172,"data":"APPLYING TG TRANSFORMATION (2nd Place Discovery)\n"}
+,{"stream_name":"stdout","time":54.211054175,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":54.211059252,"data":"Original Tg range: [118.55, 194.21]\n"}
+,{"stream_name":"stdout","time":54.211063946,"data":"Original Tg mean: 164.25\n"}
+,{"stream_name":"stdout","time":54.211068577,"data":"Transformed Tg range: [258.40, 394.58]\n"}
+,{"stream_name":"stdout","time":54.21107407,"data":"Transformed Tg mean: 340.65\n"}
+,{"stream_name":"stdout","time":54.211078935,"data":"======================================================================\n"}
+,{"stream_name":"stdout","time":54.211084451,"data":"\n"}
+,{"stream_name":"stdout","time":54.211089234,"data":"Submission validation:\n"}
+,{"stream_name":"stdout","time":54.211093441,"data":"Shape: (3, 6)\n"}
+,{"stream_name":"stdout","time":54.211097495,"data":"Columns: ['id', 'Tg', 'FFV', 'Tc', 'Density', 'Rg']\n"}
+,{"stream_name":"stdout","time":54.211101737,"data":"Any NaN: False\n"}
+,{"stream_name":"stdout","time":54.211105916,"data":"Any inf: False\n"}
+,{"stream_name":"stdout","time":54.211110255,"data":"\n"}
+,{"stream_name":"stdout","time":54.211113281,"data":"Submission preview:\n"}
+,{"stream_name":"stdout","time":54.211116005,"data":"           id          Tg       FFV        Tc   Density         Rg\n"}
+,{"stream_name":"stdout","time":54.21111886,"data":"0  1109053969  394.580869  0.366268  0.212383  1.300376  28.467304\n"}
+,{"stream_name":"stdout","time":54.211121657,"data":"1  1422188626  368.984564  0.380678  0.207844  1.114854  22.513409\n"}
+,{"stream_name":"stdout","time":54.211124633,"data":"2  2032016830  258.395842  0.356138  0.272902  1.154758  26.052130\n"}
+,{"stream_name":"stdout","time":54.211128427,"data":"\n"}
+,{"stream_name":"stdout","time":54.211132487,"data":"Submission statistics:\n"}
+,{"stream_name":"stdout","time":54.211137072,"data":"               Tg       FFV        Tc   Density         Rg\n"}
+,{"stream_name":"stdout","time":54.211141927,"data":"count    3.000000  3.000000  3.000000  3.000000   3.000000\n"}
+,{"stream_name":"stdout","time":54.211146899,"data":"mean   340.653758  0.367695  0.231043  1.189996  25.677614\n"}
+,{"stream_name":"stdout","time":54.21115075,"data":"std     72.377941  0.012332  0.036322  0.097652   2.994564\n"}
+,{"stream_name":"stdout","time":54.211154869,"data":"min    258.395842  0.356138  0.207844  1.114854  22.513409\n"}
+,{"stream_name":"stdout","time":54.211158822,"data":"25%    313.690203  0.361203  0.210113  1.134806  24.282769\n"}
+,{"stream_name":"stdout","time":54.211163159,"data":"50%    368.984564  0.366268  0.212383  1.154758  26.052130\n"}
+,{"stream_name":"stdout","time":54.211167299,"data":"75%    381.782716  0.373473  0.242643  1.227567  27.259717\n"}
+,{"stream_name":"stdout","time":54.211171297,"data":"max    394.580869  0.380678  0.272902  1.300376  28.467304\n"}
+,{"stream_name":"stdout","time":54.211175367,"data":"\n"}
+,{"stream_name":"stdout","time":54.211195682,"data":"✅ Submission saved to submission.csv successfully!\n"}
+,{"stream_name":"stdout","time":54.21120122,"data":"   Includes Tg transformation for improved leaderboard performance.\n"}
+,{"stream_name":"stderr","time":58.963578577,"data":"/usr/local/lib/python3.11/dist-packages/traitlets/traitlets.py:2915: FutureWarning: --Exporter.preprocessors=[\"remove_papermill_header.RemovePapermillHeader\"] for containers is deprecated in traitlets 5.0. You can pass `--Exporter.preprocessors item` ... multiple times to add items to a list.\n"}
+,{"stream_name":"stderr","time":58.963621763,"data":"  warn(\n"}
+,{"stream_name":"stderr","time":59.011055422,"data":"[NbConvertApp] Converting notebook __notebook__.ipynb to notebook\n"}
+,{"stream_name":"stderr","time":59.367447234,"data":"[NbConvertApp] Writing 92061 bytes to __notebook__.ipynb\n"}
+,{"stream_name":"stderr","time":62.654389593,"data":"/usr/local/lib/python3.11/dist-packages/traitlets/traitlets.py:2915: FutureWarning: --Exporter.preprocessors=[\"nbconvert.preprocessors.ExtractOutputPreprocessor\"] for containers is deprecated in traitlets 5.0. You can pass `--Exporter.preprocessors item` ... multiple times to add items to a list.\n"}
+,{"stream_name":"stderr","time":62.654432837,"data":"  warn(\n"}
+,{"stream_name":"stderr","time":62.691190914,"data":"[NbConvertApp] Converting notebook __notebook__.ipynb to html\n"}
+,{"stream_name":"stderr","time":63.840597183,"data":"[NbConvertApp] Writing 499961 bytes to __results__.html\n"}
+]
