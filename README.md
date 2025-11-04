@@ -29,10 +29,10 @@ python kaggle/kaggle_automate.py "Your message"
 
 | Version | Configuration | Score | Change  | Leaderboard Placement |
 |---------|---------------|-------|---------|----------------------|
-| v1 | Original data only | 0.139 | Baseline | - |
-| v2 | + Tc dataset (Tc-SMILES) | 0.092 | ↓ 33.8% | - |
+| v1 | Original data only | 0.139 | Baseline | 2000th |
+| v2 | + Tc dataset (Tc-SMILES) | 0.092 | ↓ 33.8% | 453th |
 | v3 | + Tg dataset (TG-of-Polymer) | 0.085 | ↓ 7.6% | 15th 🥉 |
-| v4 | + Density (PI1070) | 0.088 | Reverted ⚠️ | - |
+| v4 | + Density (PI1070) | 0.088 | Reverted ⚠️ | 66th |
 | v5 | + Tc +Tg +Rg +LAMALAB (7,369 Tg) | 0.083 | ↓ 2.4% ✅ | 13th |
 | v6 | + Ensemble (5 models per property) | 0.08266 | ↓ 0.4% | 10th |
 | **v7** | **+ 21 chemistry features (14th place insights)** | **0.08008** | **↓ 3.1% ✅** | **6th 🏆** |
