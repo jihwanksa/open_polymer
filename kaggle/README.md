@@ -2,6 +2,18 @@
 
 Fully automated push, execute, submit, and score tracking for Kaggle competitions.
 
+## Quick Start
+
+```bash
+cd /Users/jihwan/Downloads/open_polymer
+python kaggle/kaggle_automate.py "Your message"
+```
+
+**Output files:**
+- `kaggle/automation.log` - Workflow progress
+- `logs/polymer-v2-enhanced-tc-tg-augmentation_YYYYMMDD_HHMMSS.log` - Notebook execution details
+- `submission.csv` - Latest predictions
+
 ## Directory Structure
 
 ```
@@ -46,57 +58,70 @@ python kaggle/kaggle_automate.py
 ## What It Does
 
 1. ✅ **Pushes** notebook to Kaggle
-2. ✅ **Waits** for execution (polls every 15 seconds, max 10 minutes)
-3. ✅ **Downloads** output files and logs
-4. ✅ **Shows** last 50 lines of kernel logs
-5. ✅ **Submits** automatically to competition
-6. ✅ **Polls** for scores (up to 20 minutes)
-7. ✅ **Displays** results with history
+2. ✅ **Waits** for execution (polls every 60 seconds, max 20 minutes)
+3. ✅ **Downloads** output files and notebook execution logs
+4. ✅ **Submits** automatically to competition
+5. ✅ **Polls** for scores (up to 20 minutes)
+6. ✅ **Displays** results with history
 
 ## Output Organization
 
-Automatically organizes outputs:
-- **Logs:** `../logs/polymer-v2-enhanced-tc-tg-augmentation.log`
-- **Submissions:** `../submissions/submission_YYYYMMDD_HHMMSS.csv`
+Automatically organizes all outputs:
+- **Automation logs:** `kaggle/automation.log` (tracks automation workflow)
+- **Notebook logs:** `logs/polymer-v2-enhanced-tc-tg-augmentation_YYYYMMDD_HHMMSS.log` (timestamped execution logs)
+- **Submissions:** `submissions/submission_YYYYMMDD_HHMMSS.csv` (if created by notebook)
+- **Latest submission:** `submission.csv` (current output)
 
 ## Example Output
 
 ```
 ======================================================================
-🚀 KAGGLE NOTEBOOK AUTOMATION
+🚀 KAGGLE AUTOMATION PIPELINE
 ======================================================================
 
-▶ Pushing notebook to Kaggle...
-======================================================================
-✅ Notebook pushed successfully!
+[10:06:22] Pushing notebook to Kaggle...
+✅ Pushed successfully
 
-⏳ Waiting for notebook execution...
-  [125s] Still running...
-✅ Notebook execution complete!
+[10:06:24] Waiting for notebook execution...
+   ⏳ Running... (0s)
+✅ Complete after 53s
 
-📥 Downloading notebook output...
-  ✅ Output downloaded successfully!
+[10:07:18] Downloading results...
+✅ Downloaded
 
-📋 KERNEL LOG (last 50 lines):
-======================================================================
-[Training XGBoost for Tg...]
-[Training XGBoost for FFV...]
-...
-✅ Submission saved to submission.csv
+📋 Notebook log saved: logs/polymer-v2-enhanced-tc-tg-augmentation_20251104_100718.log
 
-📤 Submitting to competition...
-✅ Submission successful!
+[10:07:18] Submitting to competition...
+✅ Submitted
 
-⏳ Waiting for Kaggle to score submission...
-  [95s] Still scoring...
+[10:07:20] Waiting for scores...
+✅ Scores received!
 
-✅ SCORES RECEIVED!
-======================================================================
-SUBMISSION RESULTS:
-======================================================================
 fileName,date,description,status,publicScore,privateScore
--
-submission.csv,2025-10-27 22:15:00,,COMPLETE,0.082,0.083
+submission.csv,2025-10-31 18:10:28.907000,,SubmissionStatus.COMPLETE,0.11413,0.08334
+
+Previous:
+submission.csv,2025-10-31 17:52:35.073000,,SubmissionStatus.COMPLETE,0.10049,0.08548
+submission.csv,2025-10-31 17:08:26.517000,,SubmissionStatus.COMPLETE,0.10049,0.08548
+
+======================================================================
+✅ DONE! Total time: 0m 57s
+======================================================================
+```
+
+## Checking Execution Logs
+
+Notebook execution logs are saved with timestamps in `logs/` folder:
+
+```bash
+# View latest log
+ls -lt logs/ | head -2
+
+# Check specific log
+cat logs/polymer-v2-enhanced-tc-tg-augmentation_20251104_100718.log
+
+# View automation workflow
+cat kaggle/automation.log
 ```
 
 ## Configuration
@@ -126,6 +151,15 @@ WORK_DIR = "/Users/jihwan/Downloads/open_polymer"
 ## Notes
 
 - Each run is fully independent
-- Submissions are timestamped and stored
-- Logs preserve the complete execution history
-- Perfect for CI/CD pipeline integration
+- Notebook execution logs are saved with timestamps for version tracking
+- Automation logs track the workflow progress (push → execute → submit → score)
+- All submissions show current + previous 3 scores for comparison
+- Perfect for iterative development and CI/CD pipeline integration
+
+## Features
+
+- ✅ **Automated workflow**: One command runs entire pipeline
+- ✅ **Version tracking**: Timestamped logs for each execution
+- ✅ **Score history**: Shows last 4 submissions automatically
+- ✅ **Error handling**: Gracefully handles failures at each step
+- ✅ **Progress monitoring**: Real-time status updates during execution
