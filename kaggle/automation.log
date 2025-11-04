@@ -1,38 +1,35 @@
-=== Automation started at 2025-11-04 14:00:56.876251 ===
+=== Automation started at 2025-11-04 15:13:32.422290 ===
 
 ======================================================================
 🚀 KAGGLE AUTOMATION PIPELINE
 ======================================================================
 
-[14:00:56] Pushing notebook to Kaggle...
+[15:13:32] Pushing notebook to Kaggle...
 ✅ Pushed successfully
 
-[14:00:58] Waiting for notebook execution...
+[15:13:34] Waiting for notebook execution...
    ⏳ Running... (0s)
-   ⏳ Running... (64s)
-✅ Complete after 90s
+✅ Complete after 64s
 
-[14:02:29] Downloading results...
+[15:14:38] Downloading results...
 ✅ Downloaded
 
-📋 Notebook log saved: logs/polymer-v2-enhanced-tc-tg-augmentation_20251104_140230.log
-[14:02:30] Submitting to competition...
+📋 Notebook log saved: logs/polymer-v2-enhanced-tc-tg-augmentation_20251104_151439.log
+[15:14:39] Submitting to competition...
 ✅ Submitted
 
-[14:02:31] Waiting for scores...
-   ⏳ Waiting... (0s)
-   ⏳ Waiting... (60s)
+[15:14:40] Waiting for scores...
 ✅ Scores received!
 
 fileName,date,description,status,publicScore,privateScore
-submission.csv,2025-11-04 22:01:56.413000,,SubmissionStatus.COMPLETE,0.10125,0.08008
+submission.csv,2025-11-04 23:11:37,,SubmissionStatus.COMPLETE,0.58280,0.55502
 
 Previous:
-submission.csv,2025-11-04 21:52:43,,SubmissionStatus.COMPLETE,0.10125,0.08008
-submission.csv,2025-10-31 18:10:28.907000,,SubmissionStatus.COMPLETE,0.11413,0.08334
-submission.csv,2025-10-31 17:52:35.073000,,SubmissionStatus.COMPLETE,0.10049,0.08548
+submission.csv,2025-11-04 23:11:02.157000,,SubmissionStatus.COMPLETE,0.58280,0.55502
+submission.csv,2025-11-04 23:07:23,,SubmissionStatus.COMPLETE,0.10102,0.07965
+submission.csv,2025-11-04 23:04:25.047000,,SubmissionStatus.COMPLETE,0.10186,0.07977
 
 ======================================================================
-✅ DONE! Total time: 2m 47s
+✅ DONE! Total time: 1m 8s
 ======================================================================
 
