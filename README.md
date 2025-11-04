@@ -45,7 +45,7 @@ python kaggle/kaggle_automate.py "Your message"
 | **v48** | **XGBoost Ensemble** | n=500, lr=0.05, depth=8, subsample=0.8, colsample=0.8 | **0.08008 / 0.10125** | Baseline | ✅ |
 | v50 | XGBoost | n=500, lr=0.05, **depth=10**, **reg_lambda=3.0**, **min_child_weight=3** | 0.08081 / 0.09915 | ↑ +0.9% ❌ | Worse |
 | v51 | XGBoost | **n=800**, **lr=0.03**, depth=8, subsample=0.8, colsample=0.8 | 0.07977 / 0.10186 | ↓ 0.4% ✅ | Better! |
-| **v52** | **XGBoost** | n=500, lr=0.05, depth=8, **subsample=0.9**, **colsample=0.7**, **colsample_bylevel=0.7** | **0.07965 / 0.10102** | **↓ 0.5% ✅** | **BEST! 🥇** |
+| **v52** | **XGBoost** | n=500, lr=0.05, depth=8, **subsample=0.9**, **colsample=0.7**, **colsample_bylevel=0.7** | **0.07965 / 0.10102** | **↓ 0.5% ✅** | **BEST! 🥇 4th place in leaderboard** |
 | v53 | Random Forest | n=500, depth=15, min_split=5, min_leaf=2, max_features='sqrt' | 0.55502 / 0.58280 | ↑ +593% ❌ | **Bug: eval_set** |
 | v54 | LightGBM | n=500, depth=8, num_leaves=63, objective='mae' | 0.55502 / 0.58280 | ↑ +593% ❌ | **Bug: eval_set** |
 | v55 | LightGBM DART | boosting='dart', drop_rate=0.1, n=500, depth=8, num_leaves=63 | 0.55502 / 0.58280 | ↑ +593% ❌ | **Bug: eval_set** |
