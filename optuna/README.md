@@ -30,10 +30,12 @@ python optuna_tune_xgb.py
 ## Latest Results
 
 ### Random Forest (97/100 trials completed)
-- **Best wMAE**: 0.0252
+- **Best Local Validation wMAE**: 0.0252
 - **Config**: n=800, depth=25, max_features=4
-- **Improvement**: 68% better than v53 (0.07874)
-- **Status**: Ready to test on Kaggle! 🚀
+- **Kaggle Test Result (v56)**: 0.08001 (Private), 0.10388 (Public)
+- **Status**: ❌ Worse than v53 baseline (0.07874) - Local validation didn't translate!
+
+⚠️ **Key Lesson:** Local validation wMAE optimized on training data did NOT improve competition score. The Optuna hyperparameters likely overfit to the training distribution.
 
 See `RF_BEST_RESULTS.md` for full details.
 
@@ -55,17 +57,20 @@ optuna-dashboard sqlite:///optuna_polymer_xgb.db --port 8081
 
 Then open: http://127.0.0.1:8080
 
-## Next Steps
+## Lessons Learned
 
-1. **Test Optuna RF config on Kaggle** (v56)
-   - See if wMAE=0.0252 translates to better Kaggle score
+1. **v56 (Optuna RF) Failed** ❌
+   - Local wMAE: 0.0252 (68% better than baseline)
+   - Kaggle Score: 0.08001 (worse than v53's 0.07874)
+   - **Conclusion:** Overfitting to training distribution
    
-2. **Run XGBoost optimization** (optional)
-   - Compare which model architecture works better
-
-3. **Iterate based on results**
-   - If RF Optuna config wins, try variations
-   - If not, analyze what local wMAE doesn't capture
+2. **v53 (Manual RF) Remains Best** ✅
+   - Kaggle Score: 0.07874 (Private), 0.10354 (Public)
+   - Simpler hyperparameters generalize better
+   
+3. **Local Validation is Unreliable**
+   - Training data distribution ≠ Competition test set
+   - Manual/intuitive hyperparameters often beat aggressive optimization
 
 ---
 
