@@ -17,9 +17,9 @@ from tqdm import tqdm
 import json
 from datetime import datetime
 
-# Add src to path (now in parent directory)
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
-from competition_metric import calculate_wmae, get_property_stats
+# Don't use complex wMAE - use simple MAE like successful manual configs!
+# The issue: wMAE with validation stats ≠ wMAE with test stats
+# Solution: Use simple unweighted MAE (what v53 optimized)
 
 
 def create_chemistry_features(df):
@@ -223,24 +223,27 @@ def objective(trial, X, y, target_cols, n_samples_per_property, ranges_per_prope
     # Train and predict
     y_pred = train_ensemble_rf(X_train, y_train, X_val, y_val, params, n_ensemble=3)
     
-    # Calculate competition metric (wMAE)
-    wmae = calculate_wmae(y_val, y_pred, target_cols, n_samples_per_property, ranges_per_property)
-    
-    # Also calculate per-property MAE for logging
+    # Calculate SIMPLE MAE (what v53 used!)
+    # Don't use complex wMAE with validation stats - it doesn't generalize!
+    maes = []
     for i, prop in enumerate(target_cols):
         mask = ~np.isnan(y_val[:, i])
         if mask.sum() > 0:
             mae = mean_absolute_error(y_val[mask, i], y_pred[mask, i])
+            maes.append(mae)
             trial.set_user_attr(f'{prop}_mae', mae)
     
-    return wmae
+    # Simple average - no complex weighting
+    simple_mae = np.mean(maes) if maes else float('inf')
+    
+    return simple_mae
 
 
 def main():
     """Run Optuna optimization"""
     print("="*70)
     print("Optuna Hyperparameter Optimization for Random Forest")
-    print("Using competition wMAE metric")
+    print("Using SIMPLE MAE (what v53 used!)")
     print("="*70)
     print()
     
@@ -252,17 +255,18 @@ def main():
     print("This will take 20-40 minutes for 100 trials")
     print()
     
+    # Create NEW study with simple MAE (not complex wMAE)
     study = optuna.create_study(
         direction='minimize',
-        study_name='polymer_rf_optimization',
-        storage='sqlite:///optuna_polymer_rf.db',
-        load_if_exists=True
+        study_name='polymer_rf_simple_mae',
+        storage='sqlite:///optuna_polymer_rf_simple_mae.db',
+        load_if_exists=False  # Fresh start with correct metric
     )
     
-    # Run optimization
+    # Run optimization (no longer need n_samples/ranges for simple MAE)
     study.optimize(
         lambda trial: objective(trial, X, y, target_cols, n_samples_per_property, ranges_per_property),
-        n_trials=100,
+        n_trials=150,  # More trials for better exploration
         show_progress_bar=True
     )
     
@@ -270,7 +274,8 @@ def main():
     print("\n" + "="*70)
     print("OPTIMIZATION COMPLETE!")
     print("="*70)
-    print(f"\nBest wMAE: {study.best_value:.6f}")
+    print(f"\nBest Simple MAE: {study.best_value:.6f}")
+    print("(Using unweighted MAE - matches what v53 optimized!)")
     print(f"\nBest hyperparameters:")
     for key, value in study.best_params.items():
         print(f"  {key}: {value}")
