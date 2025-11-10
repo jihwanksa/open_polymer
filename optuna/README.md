@@ -22,9 +22,10 @@ python optuna_tune_xgb.py
 | `optuna_tune_xgb.py` | XGBoost optimization script |
 | `OPTUNA_GUIDE.md` | Complete usage guide |
 | `OPTUNA_COMPARISON.md` | RF vs XGB comparison |
-| `RF_BEST_RESULTS.md` | **Current best RF results** ⭐ |
-| `optuna_polymer_rf.db` | RF optimization database |
-| `optuna_polymer_xgb.db` | XGB optimization database |
+| `RF_BEST_RESULTS.md` | Random Forest optimization results |
+| `XGB_BEST_RESULTS.md` | **XGBoost optimization results** ⭐ |
+| `optuna_polymer_rf.db` | RF optimization database (150 trials) |
+| `optuna_polymer_xgb.db` | XGB optimization database (86 trials) |
 | `test_optuna_env.py` | Environment test script |
 
 ## Latest Results
@@ -39,9 +40,13 @@ python optuna_tune_xgb.py
 
 See `RF_BEST_RESULTS.md` for full details.
 
-### XGBoost
-- **Status**: Ready to run
-- **Command**: `python optuna_tune_xgb.py`
+### XGBoost (86/100 trials completed)
+- **Best Local Validation wMAE**: 0.0239 (better than RF!)
+- **Config**: n=650, depth=12, lr=0.065, subsample=0.69
+- **Kaggle Test Result (v57)**: Pending submission
+- **Status**: 🔄 Testing on Kaggle
+
+See `XGB_BEST_RESULTS.md` for full details.
 
 ## Live Dashboard
 
