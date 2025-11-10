@@ -17,8 +17,8 @@ from tqdm import tqdm
 import json
 from datetime import datetime
 
-# Add src to path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+# Add src to path (now in parent directory)
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 from competition_metric import calculate_wmae, get_property_stats
 
 
