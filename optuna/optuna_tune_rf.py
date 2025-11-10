@@ -151,12 +151,10 @@ def load_and_prepare_data():
     
     print(f"Final dataset: {X.shape[0]} samples, {X.shape[1]} features")
     
-    # Calculate property statistics for wMAE
-    n_samples_per_property, ranges_per_property = get_property_stats(y, target_cols)
-    
-    print("\nProperty statistics:")
-    for prop in target_cols:
-        print(f"  {prop}: {n_samples_per_property[prop]} samples, range={ranges_per_property[prop]:.2f}")
+    # Note: We don't need property statistics for simple MAE
+    # But keep the return signature for compatibility
+    n_samples_per_property = None
+    ranges_per_property = None
     
     return X, y, target_cols, n_samples_per_property, ranges_per_property
 
