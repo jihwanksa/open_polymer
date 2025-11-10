@@ -18,20 +18,22 @@ import os
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(parent_dir, 'src'))
 
-from data_preprocessing import MolecularDataProcessor
-from models.traditional import TraditionalMLModel
+import pickle
 
-# Initialize
-processor = MolecularDataProcessor()
+# Load v53 Best Random Forest Model
+MODEL_LOADED = False
+model = None
 
-# Load model
-model = TraditionalMLModel()
 try:
-    model.load(os.path.join(parent_dir, 'models', 'xgboost_model.pkl'))
+    model_path = os.path.join(parent_dir, 'models', 'random_forest_v53_best.pkl')
+    with open(model_path, 'rb') as f:
+        model_data = pickle.load(f)
+        model = model_data
     MODEL_LOADED = True
+    print(f"✅ Loaded v53 Best Random Forest Model (Private: 0.07874, Public: 0.10354)")
 except Exception as e:
     MODEL_LOADED = False
-    print(f"Warning: Could not load model: {e}")
+    print(f"⚠️  Warning: Could not load model: {e}")
 
 # Property descriptions
 PROPERTY_INFO = {
@@ -72,6 +74,60 @@ PROPERTY_INFO = {
     }
 }
 
+def create_chemistry_features_single(smiles):
+    """Create 21 chemistry-based features from a single SMILES string (v53 configuration)"""
+    try:
+        smiles_str = str(smiles) if pd.notna(smiles) else ""
+        
+        # Basic counts (10 features)
+        basic = {
+            'smiles_length': len(smiles_str),
+            'carbon_count': smiles_str.count('C'),
+            'nitrogen_count': smiles_str.count('N'),
+            'oxygen_count': smiles_str.count('O'),
+            'sulfur_count': smiles_str.count('S'),
+            'fluorine_count': smiles_str.count('F'),
+            'ring_count': smiles_str.count('c') + smiles_str.count('C1'),
+            'double_bond_count': smiles_str.count('='),
+            'triple_bond_count': smiles_str.count('#'),
+            'branch_count': smiles_str.count('('),
+        }
+        
+        # Chemistry-based features (11 additional features)
+        num_side_chains = smiles_str.count('(')
+        backbone_carbons = smiles_str.count('C') - smiles_str.count('C(')
+        aromatic_count = smiles_str.count('c')
+        h_bond_donors = smiles_str.count('O') + smiles_str.count('N')
+        h_bond_acceptors = smiles_str.count('O') + smiles_str.count('N')
+        num_rings = smiles_str.count('1') + smiles_str.count('2')
+        single_bonds = len(smiles_str) - smiles_str.count('=') - smiles_str.count('#') - aromatic_count
+        halogen_count = smiles_str.count('F') + smiles_str.count('Cl') + smiles_str.count('Br')
+        heteroatom_count = smiles_str.count('N') + smiles_str.count('O') + smiles_str.count('S')
+        mw_estimate = (smiles_str.count('C') * 12 + smiles_str.count('O') * 16 + 
+                      smiles_str.count('N') * 14 + smiles_str.count('S') * 32 + smiles_str.count('F') * 19)
+        branching_ratio = num_side_chains / max(backbone_carbons, 1)
+        
+        # Combine all features (21 total)
+        features = {
+            **basic,
+            'num_side_chains': num_side_chains,
+            'backbone_carbons': backbone_carbons,
+            'aromatic_count': aromatic_count,
+            'h_bond_donors': h_bond_donors,
+            'h_bond_acceptors': h_bond_acceptors,
+            'num_rings': num_rings,
+            'single_bonds': single_bonds,
+            'halogen_count': halogen_count,
+            'heteroatom_count': heteroatom_count,
+            'mw_estimate': mw_estimate,
+            'branching_ratio': branching_ratio,
+        }
+        
+        return np.array(list(features.values())).reshape(1, -1)
+    except:
+        return np.zeros((1, 21))
+
+
 def predict_properties(smiles_input):
     """Main prediction function"""
     
@@ -97,14 +153,25 @@ def predict_properties(smiles_input):
         # Draw molecule
         img = Draw.MolToImage(mol, size=(400, 400))
         
-        # Extract features (use 1024 bits to match trained model)
-        df = pd.DataFrame({'SMILES': [smiles_input]})
-        descriptors = processor.create_descriptor_features(df)
-        fingerprints = processor.create_fingerprint_features(df, n_bits=1024)
-        X = pd.concat([descriptors, fingerprints], axis=1)
+        # Extract chemistry features (21 features - v53 configuration)
+        X = create_chemistry_features_single(smiles_input)
         
-        # Predict
-        predictions = model.predict(X)[0]
+        # Predict using v53 ensemble model
+        target_cols = ['Tg', 'FFV', 'Tc', 'Density', 'Rg']
+        predictions_raw = np.zeros(5)
+        
+        for i, target in enumerate(target_cols):
+            if target in model['models'] and target in model['scalers']:
+                scaler = model['scalers'][target]
+                ensemble_models = model['models'][target]
+                
+                X_scaled = scaler.transform(X)
+                ensemble_preds = np.array([m.predict(X_scaled) for m in ensemble_models])
+                predictions_raw[i] = ensemble_preds.mean()
+        
+        # Apply Tg transformation (v53: (9/5) * Tg + 45)
+        predictions = predictions_raw.copy()
+        predictions[0] = (9/5) * predictions[0] + 45  # Tg transformation
         
         # Format results
         results_md = "## 🎯 Predicted Properties\n\n"
@@ -119,9 +186,10 @@ def predict_properties(smiles_input):
         
         # Add confidence note
         results_md += "\n### 📊 Model Performance\n"
-        results_md += "- **Model:** XGBoost (Competition Winner 🥇)\n"
-        results_md += "- **Accuracy:** wMAE = 0.030 (97% accurate)\n"
-        results_md += "- **Training Data:** 7,973 validated polymers\n"
+        results_md += "- **Model:** Random Forest Ensemble (v53 - Best 🥇)\n"
+        results_md += "- **Private Score:** 0.07874 | **Public Score:** 0.10354\n"
+        results_md += "- **Training Data:** 10,039 samples (with external data augmentation)\n"
+        results_md += "- **Ensemble:** 5 models per property\n"
         results_md += "- **Validation:** NeurIPS 2025 Competition\n"
         
         # Molecular descriptors
@@ -144,12 +212,13 @@ def predict_properties(smiles_input):
         
         guidance_md += "### Material Characteristics:\n\n"
         
-        if tg > 100:
-            guidance_md += "- ✅ **High Tg ({:.1f}°C)**: Good thermal stability, suitable for high-temp applications\n".format(tg)
-        elif tg > 0:
-            guidance_md += "- ⚠️ **Medium Tg ({:.1f}°C)**: Moderate thermal stability\n".format(tg)
+        # Note: Tg is already transformed, so use the displayed value
+        if tg > 200:
+            guidance_md += "- ✅ **High Tg ({:.1f}°C transformed)**: Good thermal stability, suitable for high-temp applications\n".format(tg)
+        elif tg > 100:
+            guidance_md += "- ⚠️ **Medium Tg ({:.1f}°C transformed)**: Moderate thermal stability\n".format(tg)
         else:
-            guidance_md += "- ❄️ **Low Tg ({:.1f}°C)**: Flexible at room temperature, good for elastomers\n".format(tg)
+            guidance_md += "- ❄️ **Low Tg ({:.1f}°C transformed)**: Flexible at room temperature, good for elastomers\n".format(tg)
         
         if ffv > 0.15:
             guidance_md += "- 🌬️ **High FFV ({:.3f})**: Excellent for gas separation membranes\n".format(ffv)
@@ -169,7 +238,7 @@ def predict_properties(smiles_input):
         
         # Application recommendations
         apps = []
-        if tg > 100:
+        if tg > 200:
             apps.append("- 🔥 High-temperature engineering plastics")
             apps.append("- 🏗️ Structural components")
         if ffv > 0.15:
@@ -249,10 +318,11 @@ with gr.Blocks(title="Open Polymer - AI Property Prediction", theme=gr.themes.So
             gr.Markdown("""
             ### ℹ️ About This Model
             
-            - **Model:** XGBoost (Winner 🥇)
-            - **Accuracy:** wMAE = 0.030
+            - **Model:** Random Forest v53 🥇
+            - **Score:** 0.07874 (Private)
+            - **Ensemble:** 5 models/property
             - **Speed:** < 1 second
-            - **Training:** 7,973 polymers
+            - **Training:** 10,039 polymers
             - **Validation:** NeurIPS 2025
             
             ### 🎯 Properties Predicted
@@ -283,26 +353,31 @@ with gr.Blocks(title="Open Polymer - AI Property Prediction", theme=gr.themes.So
     ## 🚀 How It Works
     
     1. **Input:** Enter SMILES string of polymer repeat unit
-    2. **Feature Extraction:** Compute 15 molecular descriptors + 2,048-bit fingerprints
-    3. **Prediction:** XGBoost model predicts 5 properties
-    4. **Visualization:** Display molecule structure and results
+    2. **Feature Extraction:** Compute 21 chemistry-based features (simple, effective!)
+    3. **Prediction:** Random Forest Ensemble (5 models per property) predicts 5 properties
+    4. **Transformation:** Apply Tg shift correction (competition discovery)
+    5. **Visualization:** Display molecule structure and results
     
-    ## 📊 Model Performance
+    ## 📊 Model Performance (v53 - Best)
     
-    | Property | Accuracy (R²) | MAE | Best Use Case |
-    |----------|---------------|-----|---------------|
-    | Density | 0.798 ⭐⭐ | 0.038 g/cm³ | Structural design |
-    | FFV | 0.760 ⭐ | 0.007 | Membrane applications |
-    | Tc | 0.761 ⭐ | 0.031 K | Processing conditions |
-    | Tg | 0.629 | 54.7 °C | Thermal stability |
-    | Rg | 0.562 | 2.17 Å | Chain behavior |
+    | Property | R² Score | MAE | Training Samples |
+    |----------|----------|-----|------------------|
+    | FFV | 0.750 ⭐⭐ | 0.0096 | 7,030 samples |
+    | Density | 0.678 ⭐ | 0.0410 g/cm³ | 613 samples |
+    | Tg | 0.672 ⭐ | 46.55 °C | 2,447 samples |
+    | Tc | 0.444 | 0.0361 K | 867 samples |
+    | Rg | 0.434 | 2.50 Å | 614 samples |
+    
+    **Competition Score:** Private 0.07874, Public 0.10354 🥇
     
     ## 🔬 Technology Stack
     
-    - **ML:** XGBoost, Random Forest, GNN, Transformer
-    - **Chemistry:** RDKit for SMILES parsing and feature extraction
+    - **ML:** Random Forest Ensemble (5 models × 5 properties = 25 total models)
+    - **Features:** 21 chemistry-based features (simple but effective!)
+    - **Chemistry:** RDKit for SMILES parsing and visualization
     - **Interface:** Gradio for interactive web demo
     - **Deployment:** CPU-based (no GPU required)
+    - **Training:** External data augmentation (Tc, Tg, Density, Rg)
     
     ## 📚 Learn More
     
