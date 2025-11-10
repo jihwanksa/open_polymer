@@ -1,5 +1,5 @@
 """
-Optuna Hyperparameter Optimization for Random Forest
+Optuna Hyperparameter Optimization for XGBoost
 Uses correct competition metric (wMAE) for local validation
 """
 
@@ -7,7 +7,7 @@ import os
 import sys
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestRegressor
+import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_absolute_error
@@ -161,8 +161,8 @@ def load_and_prepare_data():
     return X, y, target_cols, n_samples_per_property, ranges_per_property
 
 
-def train_ensemble_rf(X_train, y_train, X_val, y_val, params, n_ensemble=5):
-    """Train ensemble of Random Forest models"""
+def train_ensemble_xgb(X_train, y_train, X_val, y_val, params, n_ensemble=3):
+    """Train ensemble of XGBoost models"""
     target_cols = ['Tg', 'FFV', 'Tc', 'Density', 'Rg']
     predictions = np.zeros((len(X_val), len(target_cols)))
     
@@ -181,19 +181,42 @@ def train_ensemble_rf(X_train, y_train, X_val, y_val, params, n_ensemble=5):
         X_train_scaled = scaler.fit_transform(X_train_filtered)
         X_val_scaled = scaler.transform(X_val)
         
+        # Validation set for early stopping
+        val_mask = ~np.isnan(y_val[:, i])
+        if val_mask.sum() > 0:
+            X_val_filtered = X_val_scaled[val_mask]
+            y_val_filtered = y_val[val_mask, i]
+        
         # Train ensemble
         ensemble_preds = []
         for j in range(n_ensemble):
-            model = RandomForestRegressor(
+            model = xgb.XGBRegressor(
+                objective='reg:absoluteerror',
+                eval_metric='mae',
                 n_estimators=params['n_estimators'],
                 max_depth=params['max_depth'],
-                min_samples_split=params['min_samples_split'],
-                min_samples_leaf=params['min_samples_leaf'],
-                max_features=params['max_features'],
+                learning_rate=params['learning_rate'],
+                subsample=params['subsample'],
+                colsample_bytree=params['colsample_bytree'],
+                colsample_bylevel=params.get('colsample_bylevel', 1.0),
+                min_child_weight=params.get('min_child_weight', 1),
+                reg_alpha=params.get('reg_alpha', 0),
+                reg_lambda=params.get('reg_lambda', 1),
+                gamma=params.get('gamma', 0),
                 random_state=42 + i * 10 + j,
-                n_jobs=-1
+                n_jobs=-1,
+                tree_method='hist'
             )
-            model.fit(X_train_scaled, y_train_filtered)
+            
+            if val_mask.sum() > 0:
+                model.fit(
+                    X_train_scaled, y_train_filtered,
+                    eval_set=[(X_val_filtered, y_val_filtered)],
+                    verbose=False
+                )
+            else:
+                model.fit(X_train_scaled, y_train_filtered)
+            
             pred = model.predict(X_val_scaled)
             ensemble_preds.append(pred)
         
@@ -214,14 +237,19 @@ def objective(trial, X, y, target_cols, n_samples_per_property, ranges_per_prope
     # Suggest hyperparameters
     params = {
         'n_estimators': trial.suggest_int('n_estimators', 300, 800, step=50),
-        'max_depth': trial.suggest_int('max_depth', 10, 25),
-        'min_samples_split': trial.suggest_int('min_samples_split', 2, 10),
-        'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1, 5),
-        'max_features': trial.suggest_categorical('max_features', ['sqrt', 'log2', 0.3, 0.5, 0.7]),
+        'max_depth': trial.suggest_int('max_depth', 4, 12),
+        'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.2, log=True),
+        'subsample': trial.suggest_float('subsample', 0.6, 1.0),
+        'colsample_bytree': trial.suggest_float('colsample_bytree', 0.5, 1.0),
+        'colsample_bylevel': trial.suggest_float('colsample_bylevel', 0.5, 1.0),
+        'min_child_weight': trial.suggest_int('min_child_weight', 1, 10),
+        'reg_alpha': trial.suggest_float('reg_alpha', 1e-8, 10.0, log=True),
+        'reg_lambda': trial.suggest_float('reg_lambda', 1e-8, 10.0, log=True),
+        'gamma': trial.suggest_float('gamma', 1e-8, 10.0, log=True),
     }
     
     # Train and predict
-    y_pred = train_ensemble_rf(X_train, y_train, X_val, y_val, params, n_ensemble=3)
+    y_pred = train_ensemble_xgb(X_train, y_train, X_val, y_val, params, n_ensemble=3)
     
     # Calculate competition metric (wMAE)
     wmae = calculate_wmae(y_val, y_pred, target_cols, n_samples_per_property, ranges_per_property)
@@ -239,7 +267,7 @@ def objective(trial, X, y, target_cols, n_samples_per_property, ranges_per_prope
 def main():
     """Run Optuna optimization"""
     print("="*70)
-    print("Optuna Hyperparameter Optimization for Random Forest")
+    print("Optuna Hyperparameter Optimization for XGBoost")
     print("Using competition wMAE metric")
     print("="*70)
     print()
@@ -254,8 +282,8 @@ def main():
     
     study = optuna.create_study(
         direction='minimize',
-        study_name='polymer_rf_optimization',
-        storage='sqlite:///optuna_polymer_rf.db',
+        study_name='polymer_xgb_optimization',
+        storage='sqlite:///optuna_polymer_xgb.db',
         load_if_exists=True
     )
     
@@ -288,7 +316,10 @@ def main():
         print(f"  wMAE: {trial.value:.6f}")
         print(f"  Hyperparameters:")
         for key, value in trial.params.items():
-            print(f"    {key}: {value}")
+            if isinstance(value, float):
+                print(f"    {key}: {value:.4f}")
+            else:
+                print(f"    {key}: {value}")
         
         # Show per-property MAE
         print(f"  Per-property MAE:")
@@ -306,7 +337,7 @@ def main():
         })
     
     # Save configurations to JSON
-    output_file = f'optuna_best_configs_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+    output_file = f'optuna_xgb_best_configs_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
     with open(output_file, 'w') as f:
         json.dump(configs_for_kaggle, f, indent=2)
     
@@ -315,27 +346,23 @@ def main():
     print("1. Update notebook with Rank 1 hyperparameters")
     print("2. Push to Kaggle and submit")
     print("3. Compare Kaggle score with local wMAE")
-    print("4. If good, try Rank 2-3 configs")
+    print("4. Compare with Random Forest results!")
     
-    # Save visualizations if optuna-dashboard is available
+    # Save visualizations
     try:
         import optuna.visualization as vis
         
         fig1 = vis.plot_optimization_history(study)
-        fig1.write_html('optuna_optimization_history.html')
+        fig1.write_html('optuna_xgb_optimization_history.html')
         
         fig2 = vis.plot_param_importances(study)
-        fig2.write_html('optuna_param_importances.html')
+        fig2.write_html('optuna_xgb_param_importances.html')
         
         print("\n📊 Visualizations saved:")
-        print("  - optuna_optimization_history.html")
-        print("  - optuna_param_importances.html")
-        print("\n  Open these in your browser to see:")
-        print("  - How wMAE improved over trials")
-        print("  - Which hyperparameters matter most")
+        print("  - optuna_xgb_optimization_history.html")
+        print("  - optuna_xgb_param_importances.html")
     except:
-        print("\n💡 Install optuna-dashboard for visualizations:")
-        print("  pip install plotly kaleido")
+        print("\n💡 Install plotly for visualizations: pip install plotly kaleido")
 
 
 if __name__ == "__main__":
