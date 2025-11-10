@@ -12,7 +12,14 @@
 ### 2. Trained the Model
 ✅ **Model Successfully Trained!**
 
-**Location:** `models/random_forest_v53_best.pkl`
+**Location:** `models/random_forest_v53_best.pkl`  
+⚠️ **Note:** Model file (562 MB) is stored locally, not in GitHub (exceeds 100 MB limit)
+
+**To generate the model:**
+```bash
+cd /Users/jihwan/Downloads/open_polymer
+python src/train_v53_best.py
+```
 
 **Performance:**
 | Property | MAE | RMSE | R² | Training Samples |
