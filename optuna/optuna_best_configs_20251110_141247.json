@@ -1,0 +1,97 @@
+[
+  {
+    "rank": 1,
+    "trial_number": 90,
+    "wmae": 9.43621958208814,
+    "params": {
+      "n_estimators": 700,
+      "max_depth": 22,
+      "min_samples_split": 2,
+      "min_samples_leaf": 1,
+      "max_features": 0.5
+    },
+    "per_property_mae": {
+      "Tg": 44.7446291477238,
+      "FFV": 0.009086399838475869,
+      "Tc": 0.03667846109113234,
+      "Density": 0.035994681757770326,
+      "Rg": 2.354709220029529
+    }
+  },
+  {
+    "rank": 2,
+    "trial_number": 131,
+    "wmae": 9.43621958208814,
+    "params": {
+      "n_estimators": 700,
+      "max_depth": 22,
+      "min_samples_split": 2,
+      "min_samples_leaf": 1,
+      "max_features": 0.5
+    },
+    "per_property_mae": {
+      "Tg": 44.7446291477238,
+      "FFV": 0.009086399838475867,
+      "Tc": 0.03667846109113234,
+      "Density": 0.03599468175777033,
+      "Rg": 2.3547092200295294
+    }
+  },
+  {
+    "rank": 3,
+    "trial_number": 91,
+    "wmae": 9.436788576440957,
+    "params": {
+      "n_estimators": 750,
+      "max_depth": 22,
+      "min_samples_split": 2,
+      "min_samples_leaf": 1,
+      "max_features": 0.5
+    },
+    "per_property_mae": {
+      "Tg": 44.74835371800796,
+      "FFV": 0.009083986302443153,
+      "Tc": 0.03670064529867445,
+      "Density": 0.035944305131226435,
+      "Rg": 2.3538602274644784
+    }
+  },
+  {
+    "rank": 4,
+    "trial_number": 100,
+    "wmae": 9.436788576440957,
+    "params": {
+      "n_estimators": 750,
+      "max_depth": 22,
+      "min_samples_split": 2,
+      "min_samples_leaf": 1,
+      "max_features": 0.5
+    },
+    "per_property_mae": {
+      "Tg": 44.74835371800796,
+      "FFV": 0.009083986302443153,
+      "Tc": 0.03670064529867445,
+      "Density": 0.03594430513122642,
+      "Rg": 2.3538602274644784
+    }
+  },
+  {
+    "rank": 5,
+    "trial_number": 101,
+    "wmae": 9.436788576440957,
+    "params": {
+      "n_estimators": 750,
+      "max_depth": 22,
+      "min_samples_split": 2,
+      "min_samples_leaf": 1,
+      "max_features": 0.5
+    },
+    "per_property_mae": {
+      "Tg": 44.74835371800796,
+      "FFV": 0.009083986302443153,
+      "Tc": 0.03670064529867445,
+      "Density": 0.03594430513122642,
+      "Rg": 2.3538602274644784
+    }
+  }
+]

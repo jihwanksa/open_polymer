@@ -1,0 +1,97 @@
+[
+  {
+    "rank": 1,
+    "trial_number": 145,
+    "wmae": 0.025232519509501408,
+    "params": {
+      "n_estimators": 600,
+      "max_depth": 25,
+      "min_samples_split": 3,
+      "min_samples_leaf": 1,
+      "max_features": 0.7
+    },
+    "per_property_mae": {
+      "Tg": 44.73609173140463,
+      "FFV": 0.009120850092706037,
+      "Tc": 0.03687754893225794,
+      "Density": 0.035258460588421685,
+      "Rg": 2.3461949362965506
+    }
+  },
+  {
+    "rank": 2,
+    "trial_number": 104,
+    "wmae": 0.0252339665881945,
+    "params": {
+      "n_estimators": 800,
+      "max_depth": 25,
+      "min_samples_split": 3,
+      "min_samples_leaf": 1,
+      "max_features": 0.7
+    },
+    "per_property_mae": {
+      "Tg": 44.70429255977866,
+      "FFV": 0.00912248797183869,
+      "Tc": 0.036893377340188195,
+      "Density": 0.035306992461853585,
+      "Rg": 2.3476757384073332
+    }
+  },
+  {
+    "rank": 3,
+    "trial_number": 108,
+    "wmae": 0.0252339665881945,
+    "params": {
+      "n_estimators": 800,
+      "max_depth": 25,
+      "min_samples_split": 3,
+      "min_samples_leaf": 1,
+      "max_features": 0.7
+    },
+    "per_property_mae": {
+      "Tg": 44.70429255977866,
+      "FFV": 0.009122487971838688,
+      "Tc": 0.03689337734018819,
+      "Density": 0.03530699246185359,
+      "Rg": 2.3476757384073332
+    }
+  },
+  {
+    "rank": 4,
+    "trial_number": 112,
+    "wmae": 0.0252339665881945,
+    "params": {
+      "n_estimators": 800,
+      "max_depth": 25,
+      "min_samples_split": 3,
+      "min_samples_leaf": 1,
+      "max_features": 0.7
+    },
+    "per_property_mae": {
+      "Tg": 44.70429255977867,
+      "FFV": 0.009122487971838686,
+      "Tc": 0.0368933773401882,
+      "Density": 0.03530699246185359,
+      "Rg": 2.3476757384073332
+    }
+  },
+  {
+    "rank": 5,
+    "trial_number": 114,
+    "wmae": 0.0252339665881945,
+    "params": {
+      "n_estimators": 800,
+      "max_depth": 25,
+      "min_samples_split": 3,
+      "min_samples_leaf": 1,
+      "max_features": 0.7
+    },
+    "per_property_mae": {
+      "Tg": 44.70429255977866,
+      "FFV": 0.009122487971838688,
+      "Tc": 0.0368933773401882,
+      "Density": 0.03530699246185359,
+      "Rg": 2.3476757384073332
+    }
+  }
+]
