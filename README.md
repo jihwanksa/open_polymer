@@ -2,7 +2,7 @@
 
 **Polymer property prediction using simple features + external data + Kaggle automation.**
 
-🏆 **Score: 0.07965 (Private) | 0.10102 (Public) | v52: XGBoost + Feature Sampling** | Time: ~90 seconds per submission
+🏆 **Score: 0.07874 (Private) | 0.10354 (Public) | v53: Random Forest Ensemble** | Time: ~50 seconds per submission
 
 ## TL;DR
 
@@ -38,53 +38,47 @@ python kaggle/kaggle_automate.py "Your message"
 | v6 | + Ensemble (5 models per property) | 0.08266 | ↓ 0.4% | 10th |
 | v7 | + 21 chemistry features (14th place insights) | 0.08008 | ↓ 3.1% ✅ | 6th 🏆 |
 
-### Phase 2: Systematic Hyperparameter & Model Testing (v48-v55)
+### Phase 2: Systematic Hyperparameter & Model Testing (v48-v54)
 
 | Version | Model | Hyperparameters | Private / Public | Change | Status |
 |---------|-------|----------------|------------------|--------|--------|
 | **v48** | **XGBoost Ensemble** | n=500, lr=0.05, depth=8, subsample=0.8, colsample=0.8 | **0.08008 / 0.10125** | Baseline | ✅ |
 | v50 | XGBoost | n=500, lr=0.05, **depth=10**, **reg_lambda=3.0**, **min_child_weight=3** | 0.08081 / 0.09915 | ↑ +0.9% ❌ | Worse |
 | v51 | XGBoost | **n=800**, **lr=0.03**, depth=8, subsample=0.8, colsample=0.8 | 0.07977 / 0.10186 | ↓ 0.4% ✅ | Better! |
-| **v52** | **XGBoost** | n=500, lr=0.05, depth=8, **subsample=0.9**, **colsample=0.7**, **colsample_bylevel=0.7** | **0.07965 / 0.10102** | **↓ 0.5% ✅** | **BEST! 🥇 4th place in leaderboard** |
-| v53 | Random Forest | n=500, depth=15, min_split=5, min_leaf=2, max_features='sqrt' | 0.55502 / 0.58280 | ↑ +593% ❌ | **Bug: eval_set** |
-| v54 | LightGBM | n=500, depth=8, num_leaves=63, objective='mae' | 0.55502 / 0.58280 | ↑ +593% ❌ | **Bug: eval_set** |
-| v55 | LightGBM DART | boosting='dart', drop_rate=0.1, n=500, depth=8, num_leaves=63 | 0.55502 / 0.58280 | ↑ +593% ❌ | **Bug: eval_set** |
+| v52 | XGBoost | n=500, lr=0.05, depth=8, **subsample=0.9**, **colsample=0.7**, **colsample_bylevel=0.7** | 0.07965 / 0.10102 | ↓ 0.5% ✅ | Better! |
+| **v53** | **Random Forest** | **n=500**, **depth=15**, **min_split=5**, **min_leaf=2**, **max_features='sqrt'** | **0.07874 / 0.10354** | **↓ 1.7% ✅** | **BEST! 🥇** |
+| v54 | LightGBM | n=500, depth=8, num_leaves=63, objective='mae' | 0.08011 / 0.09492 | ↑ +0.1% ❌ | Slightly worse |
 
-**⚠️ IMPORTANT NOTE**: v53-v55 all have IDENTICAL scores because they all failed with the same bug:
-- Random Forest and LightGBM don't support XGBoost's `eval_set` parameter
-- Training failed silently → models predicted zeros
-- After Tg transformation: (9/5)*0 + 45 = constant predictions
-- **These models were never properly tested** - need to fix `eval_set` handling and retest
-
-**Total improvement: 0.139 → 0.07965 = 42.7% error reduction** 🎉
+**Total improvement: 0.139 → 0.07874 = 43.4% error reduction** 🎉
 
 **Key Findings:**
 
-1. **Feature sampling (v52) wins!** 
+1. **🏆 Random Forest (v53) wins!** 
+   - Simple decision tree ensemble with depth=15, max_features='sqrt'
+   - **Best private score: 0.07874** (1.7% improvement over v48, 1.1% better than XGBoost v52)
+   - Validation: Tg MAE=36.18 (R²=0.80), Density MAE=0.045 (R²=0.82)
+   - **Why it works**: Random Forest's variance reduction through bagging complements the chemistry features well
+
+2. **Feature sampling XGBoost (v52) strong runner-up**
    - Subsample 0.9 (more data per tree) + colsample 0.7 (feature diversity)
-   - Best private score: 0.07965 (0.5% improvement over v48)
+   - Private score: 0.07965 (0.5% improvement over v48)
    - Improves generalization by reducing feature correlation
 
-2. **More trees + slower learning (v51) helps**
+3. **LightGBM (v54) slightly worse than XGBoost**
+   - Score: 0.08011 / 0.09492 (0.1% worse than baseline)
+   - Fast training but slightly overfits compared to XGBoost
+   - Best validation on Density (MAE=0.039, R²=0.84)
+
+4. **More trees + slower learning (v51) helps**
    - 800 trees with lr=0.03 achieves 0.07977 (0.4% improvement)
    - Nearly as good as v52, but 60% longer training time
 
-3. **Deeper trees + regularization (v50) slightly worse**
+5. **Deeper trees + regularization (v50) slightly worse**
    - depth=10 + L2 regularization causes slight overfitting
    - Private: 0.08081 (+0.9% worse than baseline)
    - Public: 0.09915 (better than baseline, but doesn't generalize)
 
-4. **Random Forest (v53) failed due to implementation bug**
-   - Score: 0.55502 (identical to v54, v55 - red flag!)
-   - **Root cause**: Random Forest doesn't support XGBoost's `eval_set` parameter
-   - Training failed → model defaulted to predicting zeros
-   - After Tg transform: (9/5)*0 + 45 = 45 for all predictions
-   - **Not a model failure**, but a **code compatibility issue**
-   - Need to retest with proper sklearn-compatible training code
-
-5. **Winner: v52 XGBoost with feature sampling** 🏆
-   - Best balance of performance and training time
-   - Feature diversity through column sampling prevents overfitting
+**Key insight**: Random Forest's bagging approach (bootstrap + feature randomness) works better than XGBoost's boosting for this polymer dataset with 21 chemistry features. The simpler averaging strategy is more robust than gradient boosting's sequential error correction.
 
 ### What's in v6 (Ensemble)
 - **Ensemble XGBoost**: 5 independent models per property with different random seeds
@@ -206,12 +200,12 @@ predictions = solution.apply_tg_transformation(predictions)
 
 ## Performance
 
-- **Best Model:** v52 (XGBoost + Feature Sampling)
-- **Private:** 0.07965 🥇 (0.5% improvement over v48)
-- **Public:** 0.10102
-- **Training time:** 90-95 seconds per submission (5x ensemble)
-- **Generalization:** 0.021 private-public gap (excellent)
-- **Key improvement:** Column sampling (0.7) + higher subsample (0.9) reduces overfitting
+- **Best Model:** v53 (Random Forest Ensemble)
+- **Private:** 0.07874 🥇 (1.7% improvement over v48, 43.4% total from baseline)
+- **Public:** 0.10354
+- **Training time:** 50 seconds per submission (5x ensemble, faster than XGBoost)
+- **Generalization:** 0.026 private-public gap
+- **Key insight:** Random Forest's bagging (bootstrap + feature randomness) beats gradient boosting for this chemistry feature set
 
 ## Next
 
@@ -222,12 +216,12 @@ predictions = solution.apply_tg_transformation(predictions)
 ## Architecture
 
 ```
-v52: Ensemble XGBoost (5 models per property, predictions averaged)
-├─ Tg (glass transition temp) - 2,447 samples (22.6%)
-├─ FFV (free volume fraction) - 7,030 samples (65.0%)
-├─ Tc (crystallization temp) - 867 samples (8.0%)
-├─ Density - 1,394 samples (12.9%)
-└─ Rg (radius of gyration) - 1,684 samples (15.5%)
+v53: Ensemble Random Forest (5 models per property, predictions averaged) 🥇
+├─ Tg (glass transition temp) - 9,814 samples (54.4%)
+├─ FFV (free volume fraction) - 7,030 samples (39.0%)
+├─ Tc (crystallization temp) - 867 samples (4.8%)
+├─ Density - 1,242 samples (6.9%)
+└─ Rg (radius of gyration) - 1,243 samples (6.9%)
 
 Features: 21 chemistry-based (v7)
 Basic (10): smiles_length, carbon_count, nitrogen_count, oxygen_count,
@@ -241,15 +235,15 @@ Chemistry (11): num_side_chains, backbone_carbons, branching_ratio,
 
 Training: 18,035 samples (7,973 original + 10,062 augmented)
 Ensemble: 5 models with different random seeds per property
-Objective: MAE (matches wMAE metric)
+Algorithm: Bootstrap aggregating (bagging) with feature randomness
 
-Hyperparameters (v52 - BEST):
+Hyperparameters (v53 - BEST):
   n_estimators: 500
-  max_depth: 8
-  learning_rate: 0.05
-  subsample: 0.9        ← Increased from 0.8
-  colsample_bytree: 0.7 ← Decreased from 0.8
-  colsample_bylevel: 0.7 ← NEW (level-wise sampling)
+  max_depth: 15         ← Deeper trees than XGBoost
+  min_samples_split: 5
+  min_samples_leaf: 2
+  max_features: 'sqrt'  ← √21 ≈ 4.6 features per split (strong randomness)
+  bootstrap: True       ← Default: each tree sees different data
 ```
 
 ## Commands Reference
@@ -267,4 +261,4 @@ cat kernel-metadata.json
 
 ---
 
-**Status:** Production ready | **Last Updated:** Nov 4, 2025 | **Best Model:** v52 XGBoost + Feature Sampling | **Score:** 0.07965 (Private) | 0.10102 (Public)
+**Status:** Production ready | **Last Updated:** Nov 10, 2025 | **Best Model:** v53 Random Forest Ensemble | **Score:** 0.07874 (Private) | 0.10354 (Public)
