@@ -22,37 +22,48 @@ def run_cmd(cmd):
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     return result.returncode, result.stdout, result.stderr
 
-def log_print(msg, log_file=None):
-    """Print to console and log file"""
-    print(msg)
-    if log_file:
-        with open(log_file, 'a') as f:
-            f.write(msg + '\n')
+def fetch_logs(kernel_slug, work_dir):
+    """Fetch and display execution logs"""
+    log_dir = os.path.join(work_dir, "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    code, _, _ = run_cmd(f"kaggle kernels output {kernel_slug} -p {log_dir} --logs 2>&1")
+    
+    if code == 0:
+        log_files = [f for f in os.listdir(log_dir) if f.endswith(".log")]
+        if log_files:
+            latest_log = max([os.path.join(log_dir, f) for f in log_files], key=os.path.getmtime)
+            with open(latest_log, 'r') as f:
+                content = f.read()
+                if content.strip():
+                    print(f"\n📋 Execution Log:")
+                    print("-" * 70)
+                    # Show last 50 lines if too long
+                    lines = content.splitlines()
+                    if len(lines) > 50:
+                        print(f"... (showing last 50 of {len(lines)} lines)")
+                        print("\n".join(lines[-50:]))
+                    else:
+                        print(content)
+                    print("-" * 70)
 
 def main():
-    log_file = os.path.join(WORK_DIR, "kaggle", "automation.log")
-    
-    # Clear previous log
-    with open(log_file, 'w') as f:
-        f.write(f"=== Automation started at {datetime.now()} ===\n")
-    
-    log_print(f"\n{'='*70}", log_file)
-    log_print(f"🚀 KAGGLE AUTOMATION PIPELINE", log_file)
-    log_print(f"{'='*70}\n", log_file)
+    print(f"\n{'='*70}")
+    print(f"🚀 KAGGLE AUTOMATION PIPELINE")
+    print(f"{'='*70}\n")
     start = time.time()
     
     # Step 1: Push
-    log_print(f"[{timestamp()}] Pushing notebook to Kaggle...", log_file)
+    print(f"[{timestamp()}] Pushing notebook to Kaggle...")
     os.chdir(WORK_DIR)
     code, out, err = run_cmd("kaggle kernels push -p . 2>&1")
     if code == 0 and "successfully pushed" in out:
-        log_print(f"✅ Pushed successfully\n", log_file)
+        print(f"✅ Pushed successfully\n")
     else:
-        log_print(f"❌ Push failed: {err}\n", log_file)
+        print(f"❌ Push failed: {err}\n")
         return
     
     # Step 2: Wait for execution
-    log_print(f"[{timestamp()}] Waiting for notebook execution...", log_file)
+    print(f"[{timestamp()}] Waiting for notebook execution...")
     start_exec = time.time()
     check = 0
     while time.time() - start_exec < 1200:  # 20 min timeout
@@ -61,40 +72,31 @@ def main():
         elapsed = int(time.time() - start_exec)
         
         if "COMPLETE" in out:
-            log_print(f"✅ Complete after {elapsed}s\n", log_file)
+            print(f"✅ Complete after {elapsed}s\n")
             break
         elif "ERROR" in out or "FAILED" in out:
-            log_print(f"❌ Execution failed\n", log_file)
+            print(f"❌ Execution failed\n")
+            fetch_logs(KERNEL_SLUG, WORK_DIR)
             return
         
         if check % 12 == 1:  # Print every 60 seconds
-            log_print(f"   ⏳ Running... ({elapsed}s)", log_file)
+            print(f"   ⏳ Running... ({elapsed}s)")
         time.sleep(5)
     
-    # Step 3: Download (downloads both output and logs)
-    log_print(f"[{timestamp()}] Downloading results...", log_file)
+    # Fetch logs after completion
+    fetch_logs(KERNEL_SLUG, WORK_DIR)
+    
+    # Step 3: Download
+    print(f"[{timestamp()}] Downloading results...")
     code, _, _ = run_cmd(f"kaggle kernels output {KERNEL_SLUG} -p .")
     if code == 0:
-        log_print(f"✅ Downloaded\n", log_file)
-        
-        # Move log to logs folder with timestamp
-        kernel_name = KERNEL_SLUG.split('/')[-1]
-        original_log = os.path.join(WORK_DIR, f"{kernel_name}.log")
-        if os.path.exists(original_log):
-            logs_dir = os.path.join(WORK_DIR, "logs")
-            os.makedirs(logs_dir, exist_ok=True)
-            timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-            versioned_log = os.path.join(logs_dir, f"{kernel_name}_{timestamp_str}.log")
-            os.rename(original_log, versioned_log)
-            log_print(f"📋 Notebook log saved: logs/{os.path.basename(versioned_log)}", log_file)
-        else:
-            log_print(f"⚠ Notebook log not found", log_file)
+        print(f"✅ Downloaded\n")
     else:
-        log_print(f"❌ Download failed\n", log_file)
+        print(f"❌ Download failed\n")
         return
     
     # Step 4: Submit
-    log_print(f"[{timestamp()}] Submitting to competition...", log_file)
+    print(f"[{timestamp()}] Submitting to competition...")
     submissions_dir = os.path.join(WORK_DIR, 'submissions')
     if os.path.exists(submissions_dir):
         files = sorted([f for f in os.listdir(submissions_dir) if f.endswith('.csv')], reverse=True)
@@ -103,37 +105,37 @@ def main():
         submission_file = "submission.csv" if os.path.exists("submission.csv") else None
     
     if not submission_file:
-        log_print(f"❌ No submission file found\n", log_file)
+        print(f"❌ No submission file found\n")
         return
     
     msg = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else f"Auto {datetime.now().strftime('%H:%M')}"
     code, _, _ = run_cmd(f'kaggle competitions submit -c {COMPETITION} -f {submission_file} -m "{msg}" 2>&1')
-    log_print(f"✅ Submitted\n", log_file)
+    print(f"✅ Submitted\n")
     
     # Step 5: Wait for scores
-    log_print(f"[{timestamp()}] Waiting for scores...", log_file)
+    print(f"[{timestamp()}] Waiting for scores...")
     for i in range(120):
         code, out, _ = run_cmd(f"kaggle competitions submissions -c {COMPETITION} --csv")
         if code == 0 and out:
             lines = out.strip().split('\n')
             if len(lines) >= 2 and "PENDING" not in lines[1]:
-                log_print(f"✅ Scores received!\n", log_file)
-                log_print(lines[0], log_file)
-                log_print(lines[1], log_file)
+                print(f"✅ Scores received!\n")
+                print(lines[0])
+                print(lines[1])
                 if len(lines) > 2:
-                    log_print("\nPrevious:", log_file)
+                    print("\nPrevious:")
                     for prev in lines[2:min(5, len(lines))]:
-                        log_print(prev, log_file)
+                        print(prev)
                 break
         
         if i % 6 == 0:  # Print every 60 seconds
-            log_print(f"   ⏳ Waiting... ({i*10}s)", log_file)
+            print(f"   ⏳ Waiting... ({i*10}s)")
         time.sleep(10)
     
     total = int(time.time() - start)
-    log_print(f"\n{'='*70}", log_file)
-    log_print(f"✅ DONE! Total time: {total//60}m {total%60}s", log_file)
-    log_print(f"{'='*70}\n", log_file)
+    print(f"\n{'='*70}")
+    print(f"✅ DONE! Total time: {total//60}m {total%60}s")
+    print(f"{'='*70}\n")
 
 if __name__ == "__main__":
     main()
