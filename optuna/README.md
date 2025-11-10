@@ -62,20 +62,44 @@ optuna-dashboard sqlite:///optuna_polymer_xgb.db --port 8081
 
 Then open: http://127.0.0.1:8080
 
-## Lessons Learned
+## Lessons Learned & Fix
 
-1. **v56 (Optuna RF) Failed** ❌
-   - Local wMAE: 0.0252 (68% better than baseline)
-   - Kaggle Score: 0.08001 (worse than v53's 0.07874)
-   - **Conclusion:** Overfitting to training distribution
-   
-2. **v53 (Manual RF) Remains Best** ✅
-   - Kaggle Score: 0.07874 (Private), 0.10354 (Public)
-   - Simpler hyperparameters generalize better
-   
-3. **Local Validation is Unreliable**
-   - Training data distribution ≠ Competition test set
-   - Manual/intuitive hyperparameters often beat aggressive optimization
+### Problem Identified ❌
+
+**v56 & v57 used WRONG metric:**
+- Optimized wMAE with **validation** statistics (n_i, r_i from validation set)
+- Competition uses wMAE with **test** statistics (unknown!)
+- Result: Local optimization didn't translate to Kaggle performance
+
+### Solution Implemented ✅
+
+**Now using SIMPLE MAE** (what v53 actually optimized):
+```python
+# Simple unweighted average of per-property MAEs
+simple_mae = mean(MAE_Tg, MAE_FFV, MAE_Tc, MAE_Density, MAE_Rg)
+```
+
+**Why this works:**
+1. No dependency on unknown test statistics
+2. Matches what successful manual configs (v53) optimized
+3. Treats all properties equally (simpler is better)
+
+### Ready to Re-run 🚀
+
+**New optimization scripts:**
+- `optuna_tune_rf.py` - Fixed to use simple MAE
+- `optuna_tune_xgb.py` - Fixed to use simple MAE
+
+**Commands:**
+```bash
+cd /Users/jihwan/Downloads/open_polymer/optuna
+python optuna_tune_rf.py    # RF: 150 trials, ~35-45 min
+python optuna_tune_xgb.py   # XGB: 150 trials, ~35-45 min
+```
+
+**Expected:** Should beat or match v53 (0.07874) ✅
+
+See `RERUN_GUIDE.md` and `OPTUNA_FIX.md` for details.
 
 ---
 
