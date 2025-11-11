@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/jihwan/Downloads/open_polymer/src/train_gnn_enhanced.py", line 20, in <module>
+    from models.gnn import GNNModel
+  File "/Users/jihwan/Downloads/open_polymer/src/models/__init__.py", line 6, in <module>
+    from .gnn import GNNModel
+  File "/Users/jihwan/Downloads/open_polymer/src/models/gnn.py", line 7, in <module>
+    from torch_geometric.data import Data, DataLoader
+ModuleNotFoundError: No module named 'torch_geometric'

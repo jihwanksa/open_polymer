@@ -1,0 +1,3 @@
+Model,wMAE,hidden_dim,num_layers,epochs,training_time_s
+GNN_Augmented_Conservative,0.25644321869532877,128,3,75,158.3075029850006
+GNN_Augmented_Base,0.2949517684426554,64,2,50,67.88981413841248
