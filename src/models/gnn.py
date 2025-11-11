@@ -185,7 +185,10 @@ class GNNModel:
         self.model = None
         
     def prepare_data(self, smiles_list, targets=None):
-        """Prepare graph data from SMILES"""
+        """Prepare graph data from SMILES with enhanced RDKit features"""
+        print("✓ Using RDKit to enhance node features (16 dims: atom type, connectivity, charge, aromaticity, hybridization)")
+        print("✓ Using RDKit to enhance edge features (6 dims: bond type, aromaticity, ring membership)")
+        
         graph_data = []
         valid_indices = []
         
