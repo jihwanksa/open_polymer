@@ -2,6 +2,14 @@
 
 This directory contains all source code for training and evaluating polymer property prediction models.
 
+## 🏆 Best Kaggle Notebook
+
+**`best.ipynb`** (in root directory)
+- **Status:** 4th place on Kaggle leaderboard 🥇
+- **Score:** Private 0.07874 | Public 0.10354
+- **Model:** Random Forest Ensemble + 21 chemistry features
+- **Ready to use:** Your colleague can fork and run directly on Kaggle!
+
 ## 📁 Directory Structure
 
 ```
@@ -14,6 +22,7 @@ src/
 │
 ├── data_preprocessing.py       # Feature extraction & data processing
 ├── train.py                    # Traditional ML training pipeline
+├── train_v53_best.py          # Best RF model (replicates best.ipynb locally)
 ├── train_gnn_tuned.py         # GNN training with hyperparameters
 └── train_transformer.py       # Transformer training pipeline
 ```

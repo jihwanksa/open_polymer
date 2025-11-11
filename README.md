@@ -138,6 +138,17 @@ pip install -r requirements.txt
 python -c "import torch; import torch_geometric; print(f'PyTorch: {torch.__version__}, PyG: {torch_geometric.__version__}')"
 ```
 
+## 🏆 Best Kaggle Submission
+
+**`best.ipynb`** - The best performing Kaggle notebook (4th place leaderboard)
+- **Model:** Random Forest Ensemble with 21 chemistry features
+- **Private Score:** 0.07874 ⭐
+- **Public Score:** 0.10354
+- **Key Feature:** Tg transformation from 2nd place winner's discovery
+- **Status:** Ready to submit - your colleague can fork and run this directly!
+
+This notebook is **production-ready** and achieved the best competition results locally.
+
 ## Local Training
 
 Train models locally to validate performance before pushing to Kaggle:
