@@ -110,12 +110,66 @@ Built on v6, adds **11 chemistry-based features** inspired by 14th place solutio
 
 ## Setup
 
+### 1. Clone Repository
 ```bash
-# Clone and install
 git clone https://github.com/jihwanksa/open_polymer.git
 cd open_polymer
+```
+
+### 2. Create Conda Environment (Recommended)
+```bash
+# Create environment with Python 3.10
+conda create -n polymer python=3.10 -y
+
+# Activate environment
+conda activate polymer
+
+# Install dependencies
 pip install -r requirements.txt
 ```
+
+**Note:** Using conda is recommended because:
+- `torch_geometric` and `torch` require compatible versions
+- Avoids system Python conflicts
+- Isolated dependencies per project
+
+### 3. Verify Installation
+```bash
+python -c "import torch; import torch_geometric; print(f'PyTorch: {torch.__version__}, PyG: {torch_geometric.__version__}')"
+```
+
+## Local Training
+
+Train models locally to validate performance before pushing to Kaggle:
+
+### 1. Train Best Random Forest Model (v53)
+```bash
+conda activate polymer
+python src/train_v53_best.py
+```
+**Output:** `models/random_forest_v53_best.pkl` (the 4th place leaderboard model)
+**Score:** Private 0.07874 | Public 0.10354
+**Time:** ~50 seconds
+**Features:** 21 chemistry-based features + data augmentation
+
+### 2. Train Graph Neural Network (GNN)
+```bash
+conda activate polymer
+python src/train_gnn_tuned.py
+```
+**Output:** `models/gnn_best_tuned.pt`
+**Current Best:** GNN_Wider with 0.173055 wMAE (validation)
+**Features:** RDKit-enhanced node features (16 dims) + edge features (6 dims)
+**Note:** Competitive with traditional ML after feature enhancement
+
+### 3. Train Transformer Model (Optional)
+```bash
+conda activate polymer
+python src/train_transformer.py
+```
+**Output:** `models/transformer_model.pt`
+**Note:** Requires 20+ minutes on GPU
+**Architecture:** DistilBERT-based SMILES encoder
 
 ## Workflow
 

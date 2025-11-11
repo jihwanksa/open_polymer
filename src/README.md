@@ -264,19 +264,55 @@ python src/train_transformer.py
 
 ## 🚀 Quick Start
 
+### 0. Setup Environment (First Time Only)
+
+```bash
+# Create conda environment with Python 3.10
+conda create -n polymer python=3.10 -y
+conda activate polymer
+
+# Install all dependencies
+pip install -r requirements.txt
+
+# Verify installation
+python -c "import torch; import torch_geometric; print('✅ All dependencies OK')"
+```
+
 ### 1. Train All Models
 
 ```bash
-# Setup environment
-conda activate polymer_pred
+# Activate environment
+conda activate polymer
 
-# Traditional ML (fastest)
-python src/train.py
+# Best Random Forest Model (v53) - 50 seconds
+python src/train_v53_best.py
 
-# Deep Learning
-python src/train_gnn_tuned.py      # Requires: PyTorch Geometric
-python src/train_transformer.py    # Requires: Transformers
+# GNN with RDKit-enhanced features - 5-10 minutes
+python src/train_gnn_tuned.py
+
+# Transformer Model - 20+ minutes on GPU
+python src/train_transformer.py
 ```
+
+**Recommended Order:**
+1. `train_v53_best.py` (fastest, best performance)
+2. `train_gnn_tuned.py` (medium time, interesting results)
+3. `train_transformer.py` (longest, optional)
+
+### Training Scripts Reference
+
+| Script | Model | Time | Output | Features |
+|--------|-------|------|--------|----------|
+| `train_v53_best.py` | Random Forest Ensemble | ~50s | `models/random_forest_v53_best.pkl` | 21 chemistry features + augmentation |
+| `train_gnn_tuned.py` | Graph Neural Networks | ~5-10m | `models/gnn_best_tuned.pt` | 16 node + 6 edge features (RDKit) |
+| `train_transformer.py` | DistilBERT Transformer | ~20m | `models/transformer_model.pt` | SMILES tokenization (768-dim) |
+| `train.py` | XGBoost/Random Forest | ~2m | `models/{xgb,rf}_model.pkl` | Molecular descriptors + fingerprints |
+
+**When to use each:**
+- **`train_v53_best.py`**: Best production model, fastest, use for Kaggle submissions
+- **`train_gnn_tuned.py`**: Research/comparison, validates GNN feature engineering
+- **`train_transformer.py`**: Experimental, slow but good for ensemble
+- **`train.py`**: Quick baseline, good for debugging
 
 ### 2. Use Trained Models
 
