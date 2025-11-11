@@ -97,14 +97,39 @@ Input: Molecular graph (atoms=nodes, bonds=edges)
 └── MLP(256 → 128 → 64 → 5)
 ```
 
-**Node Features** (9):
-- Atom type (C, N, O, etc.)
-- Atomic number
-- Degree
-- Formal charge
-- Hybridization
-- Aromaticity
-- Ring membership
+**Node Features** (16) - Enhanced with RDKit Chemistry:
+- Atom type (C, N, O, F, P, S, H) - 7 binary features
+- Connectivity (degree / 4.0)
+- Formal charge (normalized / 4.0)
+- Aromaticity (float)
+- Hydrogen count (/ 4.0)
+- Explicit valence (/ 8.0)
+- Ring membership (binary)
+- Hybridization: SP, SP2, SP3 (3 binary features)
+- **Improvement**: 9 → 16 dimensions captures richer chemistry
+
+**Edge Features** (6) - NEW! Bond properties:
+- Bond type: Single, Double, Triple (3 binary features)
+- Bond aromaticity (binary)
+- Ring membership (binary)
+- **Impact**: Helps GNN learn bond chemistry patterns
+
+**Performance Improvement:**
+- Previous GNN best (basic): 0.177712 wMAE (GNN_Deeper)
+- Current GNN best (RDKit-enhanced): 0.173055 wMAE (GNN_Wider) ✅ +2.6%
+- Overall validation wMAE: 0.189640
+
+**Property-wise Breakdown (GNN_Wider):**
+| Property | Samples | MAE | wMAE | R² | Notes |
+|----------|---------|-----|------|-----|-------|
+| Tg (glass transition) | 87 | 88.82 | 0.259 | -0.41 | Low R² indicates room for improvement |
+| FFV (free volume) | 1419 | 0.039 | 0.051 | -4.12 | Most abundant property, still challenging |
+| Tc (crystallization) | 144 | 0.156 | 0.403 | -3.61 | Moderate performance |
+| Density | 123 | 0.673 | 0.705 | -26.68 | Worst property, needs attention |
+| Rg (radius) | 124 | 11.03 | 0.505 | -5.80 | Scale issue (Rg values are large) |
+
+- **Key insight**: Intrinsic chemistry features > artificial graph-level summaries
+- **Challenge**: Negative R² values suggest GNN may be better at ranking than absolute prediction
 
 **Key Methods:**
 ```python

@@ -166,10 +166,25 @@ predictions = solution.apply_tg_transformation(predictions)
 - **511 samples / 1037 features** = 0.49 samples per feature ❌
 - Below 5 samples/feature = inevitable overfitting
 
-### Why Deep Learning Failed
-- GNNs & Transformers need 100K+ samples to learn patterns
-- Only 7,973 training samples (10x too small)
-- Result: Memorize training data, fail on test
+### Graph Neural Networks (GNNs) - With Chemistry Enhancement
+- **Previous GNN best (basic features)**: 0.177712 wMAE (GNN_Deeper)
+- **Current GNN best (RDKit-enhanced)**: 0.173055 wMAE (GNN_Wider) ✅ **+2.6% improvement!**
+- **Overall validation wMAE**: 0.189640 (validates RDKit enhancement working)
+- **Enhancement**: Richer node features (16 dims) + edge features (6 dims) from RDKit
+- Node features now include: atom valence, hybridization (SP/SP2/SP3), ring membership
+- Edge features now include: bond type, aromaticity, ring membership
+
+**Property-wise Performance (GNN_Wider):**
+| Property | n | MAE | wMAE | R² |
+|----------|---|-----|------|-----|
+| Tg (glass transition) | 87 | 88.82 | 0.259 | -0.41 |
+| FFV (free volume) | 1419 | 0.039 | 0.051 | -4.12 |
+| Tc (crystallization) | 144 | 0.156 | 0.403 | -3.61 |
+| Density | 123 | 0.673 | 0.705 | -26.68 |
+| Rg (radius) | 124 | 11.03 | 0.505 | -5.80 |
+
+- **Key insight**: Intrinsic chemistry encoding (from RDKit) helps GNNs learn better than artificial graph-level summaries
+- **Limitation**: Still below traditional ML (0.07874), but shows promise with proper feature engineering
 
 ### Domain > Engineering (Updated with v6-v7)
 - External Tg data: +2% (0.085→0.083)
