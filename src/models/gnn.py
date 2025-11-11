@@ -15,12 +15,13 @@ from tqdm import tqdm
 class MoleculeGNN(nn.Module):
     """Graph Neural Network for molecular property prediction"""
     
-    def __init__(self, node_features=9, hidden_dim=128, num_layers=3, 
-                 num_targets=5, dropout=0.2, gnn_type='gcn'):
+    def __init__(self, node_features=16, hidden_dim=128, num_layers=3, 
+                 num_targets=5, dropout=0.2, gnn_type='gcn', edge_features=6, aux_features=0):
         super(MoleculeGNN, self).__init__()
         
         self.gnn_type = gnn_type
         self.num_layers = num_layers
+        self.aux_features = aux_features  # Chemistry features dimension
         
         # Graph convolution layers
         self.convs = nn.ModuleList()
@@ -45,13 +46,15 @@ class MoleculeGNN(nn.Module):
             
             self.batch_norms.append(nn.BatchNorm1d(hidden_dim))
         
-        # Readout and prediction layers
+        # Readout and prediction layers with chemistry features
         self.dropout = nn.Dropout(dropout)
-        self.fc1 = nn.Linear(hidden_dim * 2, hidden_dim)  # *2 for mean + max pooling
+        # Combine graph readout (hidden_dim * 2) with chemistry features (aux_features)
+        combined_dim = hidden_dim * 2 + aux_features
+        self.fc1 = nn.Linear(combined_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim // 2)
         self.fc_out = nn.Linear(hidden_dim // 2, num_targets)
     
-    def forward(self, data):
+    def forward(self, data, aux_features=None):
         x, edge_index, batch = data.x, data.edge_index, data.batch
         
         # Graph convolution layers
@@ -65,6 +68,10 @@ class MoleculeGNN(nn.Module):
         x_mean = global_mean_pool(x, batch)
         x_max = global_max_pool(x, batch)
         x = torch.cat([x_mean, x_max], dim=1)
+        
+        # Concatenate with chemistry features if provided
+        if aux_features is not None:
+            x = torch.cat([x, aux_features], dim=1)
         
         # Prediction layers
         x = F.relu(self.fc1(x))
@@ -88,7 +95,7 @@ def smiles_to_graph(smiles, clean_polymer_markers=True):
     except:
         return None
     
-    # Node features (atoms)
+    # Enhanced node features (atoms) using RDKit chemistry information
     atom_features = []
     for atom in mol.GetAtoms():
         # Atom type (one-hot for common elements)
@@ -100,32 +107,68 @@ def smiles_to_graph(smiles, clean_polymer_markers=True):
             atomic_num == 9,  # F
             atomic_num == 15, # P
             atomic_num == 16, # S
+            atomic_num == 1,  # H
         ]
         
+        # Chemical properties from RDKit
+        from rdkit.Chem import AllChem, Descriptors
         features = atom_type + [
-            atom.GetTotalDegree() / 4.0,
-            atom.GetFormalCharge(),
-            float(atom.GetIsAromatic()),
+            atom.GetTotalDegree() / 4.0,           # Connectivity
+            atom.GetFormalCharge() / 4.0,          # Charge (normalized)
+            float(atom.GetIsAromatic()),           # Aromaticity
+            atom.GetTotalNumHs() / 4.0,            # Hydrogen count
+            atom.GetExplicitValence() / 8.0,       # Valence
+            float(atom.IsInRing()),                # Is in ring
+            float(atom.GetHybridization() == Chem.HybridizationType.SP),   # SP hybridization
+            float(atom.GetHybridization() == Chem.HybridizationType.SP2),  # SP2
+            float(atom.GetHybridization() == Chem.HybridizationType.SP3),  # SP3
         ]
         atom_features.append(features)
     
     x = torch.tensor(atom_features, dtype=torch.float)
     
-    # Edge index (bonds)
-    edge_indices = []
+    # Enhanced edge features (bonds)
+    edge_index_list = []
+    edge_features = []
+    
     for bond in mol.GetBonds():
         i = bond.GetBeginAtomIdx()
         j = bond.GetEndAtomIdx()
-        edge_indices.append([i, j])
-        edge_indices.append([j, i])  # Add reverse edge
+        
+        # Bond type encoding
+        bond_type = bond.GetBondType()
+        bond_features = [
+            float(bond_type == Chem.BondType.SINGLE),
+            float(bond_type == Chem.BondType.DOUBLE),
+            float(bond_type == Chem.BondType.TRIPLE),
+            float(bond_type == Chem.BondType.AROMATIC),
+            float(bond.GetIsAromatic()),
+            float(bond.IsInRing()),
+        ]
+        
+        # Add both directions
+        edge_index_list.append([i, j])
+        edge_index_list.append([j, i])
+        edge_features.append(bond_features)
+        edge_features.append(bond_features)  # Same features for reverse edge
     
-    if len(edge_indices) == 0:
+    if len(edge_index_list) == 0:
         # Isolated atom - create self-loop
         edge_index = torch.tensor([[0], [0]], dtype=torch.long)
     else:
-        edge_index = torch.tensor(edge_indices, dtype=torch.long).t().contiguous()
+        edge_index = torch.tensor(edge_index_list, dtype=torch.long).t().contiguous()
     
-    return Data(x=x, edge_index=edge_index)
+    # Create graph with enhanced features
+    # Always create edge_attr for consistent batching (even if empty)
+    if len(edge_features) > 0:
+        edge_attr = torch.tensor(edge_features, dtype=torch.float)
+    else:
+        # For isolated atoms, create empty edge attributes
+        edge_attr = torch.zeros((0, 6), dtype=torch.float)
+    
+    graph_data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr)
+    
+    return graph_data
 
 
 class GNNModel:
@@ -159,12 +202,13 @@ class GNNModel:
     def create_model(self):
         """Create GNN model"""
         self.model = MoleculeGNN(
-            node_features=9,
+            node_features=16,  # Updated: now includes RDKit enhanced features
             hidden_dim=self.hidden_dim,
             num_layers=self.num_layers,
             num_targets=self.num_targets,
             dropout=self.dropout,
-            gnn_type=self.gnn_type
+            gnn_type=self.gnn_type,
+            edge_features=6
         ).to(self.device)
         return self.model
     
