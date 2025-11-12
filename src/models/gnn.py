@@ -182,11 +182,11 @@ class GNNModel:
         self.gnn_type = gnn_type
         self.dropout = dropout
         
-        # Auto-detect best device: MPS (Apple Silicon) > CUDA > CPU
+        # Auto-detect best device: CUDA > CPU (MPS not fully supported by PyG)
+        # Note: MPS (Apple Silicon) is available but PyTorch Geometric's scatter operations
+        # are not implemented for MPS yet. Using CPU is more reliable.
         if torch.cuda.is_available():
             self.device = 'cuda'
-        elif torch.backends.mps.is_available():
-            self.device = 'mps'  # Apple Silicon GPU acceleration
         else:
             self.device = 'cpu'
         

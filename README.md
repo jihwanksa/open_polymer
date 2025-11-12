@@ -172,15 +172,14 @@ python src/train_gnn_tuned.py
 **Current Best:** GNN_Wider with 0.173055 wMAE (validation)
 **Features:** RDKit-enhanced node features (16 dims) + edge features (6 dims)
 **GPU Acceleration:** 
-- NVIDIA CUDA: Automatic ✅
-- Apple Silicon (M1/M2/M3): MPS enabled ✅ (2-5x faster than CPU!)
-- Intel Mac: CPU fallback ⚠️
+- NVIDIA CUDA: Automatic ✅ (Recommended, fully supported)
+- Apple Silicon (M1/M2/M3): CPU (PyTorch Geometric doesn't support MPS scatter ops yet)
+- Intel Mac: CPU ⚠️
 
-**Verify your device:**
-```bash
-conda activate polymer
-python test_mps_device.py
-```
+**Note:** PyTorch Geometric's graph operations (scatter_reduce) aren't implemented on MPS yet. 
+See: https://github.com/pytorch/pytorch/issues/77764
+
+Training will run on CPU, which is still reasonably fast for small graphs (~10K samples).
 
 ### 3. Train Transformer Model (Optional)
 ```bash

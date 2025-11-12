@@ -28,15 +28,16 @@ def train_gnn_with_config(train_df, val_df, target_cols, config, run_name="GNN")
     y_val = val_df[target_cols].values
     
     # Create GNN model - Auto-detect best device
+    # Note: MPS (Apple Silicon) is available but PyTorch Geometric's scatter operations
+    # are not implemented for MPS yet, so we use CPU for reliability
     if torch.cuda.is_available():
         device = 'cuda'
         device_name = torch.cuda.get_device_name(0)
-    elif torch.backends.mps.is_available():
-        device = 'mps'
-        device_name = "Apple Silicon (MPS)"
     else:
         device = 'cpu'
         device_name = "CPU"
+        if torch.backends.mps.is_available():
+            device_name += " (MPS available but not supported by PyG yet)"
     
     print(f"Using device: {device} ({device_name})")
     
