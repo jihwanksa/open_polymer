@@ -105,7 +105,15 @@ class TransformerModel:
         self.num_targets = num_targets
         self.hidden_dim = hidden_dim
         self.dropout = dropout
-        self.device = device if torch.cuda.is_available() else 'cpu'
+        
+        # Auto-detect best device: CUDA > MPS (Apple Silicon) > CPU
+        if torch.cuda.is_available():
+            self.device = 'cuda'
+        elif torch.backends.mps.is_available():
+            self.device = 'mps'
+        else:
+            self.device = 'cpu'
+        
         self.model = None
         self.tokenizer = None
         
