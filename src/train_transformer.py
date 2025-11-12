@@ -21,12 +21,23 @@ def main():
     print("TRANSFORMER MODEL TRAINING (BERT for SMILES)")
     print("=" * 80)
     
-    # Check device
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    # Check device - try CUDA first, then MPS (Apple Silicon), then CPU
+    if torch.cuda.is_available():
+        device = 'cuda'
+        device_name = torch.cuda.get_device_name(0)
+        device_info = f"GPU: {device_name}\nGPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB"
+    elif torch.backends.mps.is_available():
+        device = 'mps'
+        device_name = "Apple Silicon (MPS)"
+        device_info = "Transformer layers fully support MPS acceleration"
+    else:
+        device = 'cpu'
+        device_name = "CPU"
+        device_info = "Running on CPU (slower)"
+    
     print(f"\nUsing device: {device}")
-    if device == 'cuda':
-        print(f"GPU: {torch.cuda.get_device_name(0)}")
-        print(f"GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+    print(f"Device name: {device_name}")
+    print(device_info)
     
     # Load data
     project_root = os.path.dirname(os.path.dirname(__file__))

@@ -187,8 +187,13 @@ conda activate polymer
 python src/train_transformer.py
 ```
 **Output:** `models/transformer_model.pt`
-**Note:** Requires 20+ minutes on GPU
+**GPU Acceleration:** 
+- NVIDIA CUDA: Automatic ✅
+- Apple Silicon (M1/M2/M3): MPS enabled ✅ (Full support!)
+- CPU fallback: ⚠️ (30-40 minutes)
+
 **Architecture:** DistilBERT-based SMILES encoder
+**Time:** ~5-10 min (GPU) | ~30-40 min (CPU)
 
 ## Workflow
 
