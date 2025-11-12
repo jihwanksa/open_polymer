@@ -181,7 +181,15 @@ class GNNModel:
         self.num_targets = num_targets
         self.gnn_type = gnn_type
         self.dropout = dropout
-        self.device = device if torch.cuda.is_available() else 'cpu'
+        
+        # Auto-detect best device: MPS (Apple Silicon) > CUDA > CPU
+        if torch.cuda.is_available():
+            self.device = 'cuda'
+        elif torch.backends.mps.is_available():
+            self.device = 'mps'  # Apple Silicon GPU acceleration
+        else:
+            self.device = 'cpu'
+        
         self.model = None
         
     def prepare_data(self, smiles_list, targets=None):
