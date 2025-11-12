@@ -171,7 +171,16 @@ python src/train_gnn_tuned.py
 **Output:** `models/gnn_best_tuned.pt`
 **Current Best:** GNN_Wider with 0.173055 wMAE (validation)
 **Features:** RDKit-enhanced node features (16 dims) + edge features (6 dims)
-**Note:** Competitive with traditional ML after feature enhancement
+**GPU Acceleration:** 
+- NVIDIA CUDA: Automatic ✅
+- Apple Silicon (M1/M2/M3): MPS enabled ✅ (2-5x faster than CPU!)
+- Intel Mac: CPU fallback ⚠️
+
+**Verify your device:**
+```bash
+conda activate polymer
+python test_mps_device.py
+```
 
 ### 3. Train Transformer Model (Optional)
 ```bash
