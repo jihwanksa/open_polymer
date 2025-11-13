@@ -20,12 +20,13 @@ python kaggle/kaggle_automate.py "Your message"
 | **Massive external data** | Tg: 511→2,447 (+380%), Density: 613→1,394 (+127%) | +2% improvement (0.085→0.083) |
 | **Ensemble (5 models)** | Variance reduction through model averaging | +0.4% improvement (0.083→0.08266) |
 | **Chemistry features (21)** | Polymer-specific: branching, backbone, H-bonding | +3.1% improvement (0.08266→0.08008) |
-| **SMILES canonicalization** | Standardizes SMILES representations for consistency | +0.5% improvement ✨ |
-| **Pseudo-labeled data (50K)** | BERT + AutoGluon + Uni-Mol ensemble predictions | +0.3% improvement 🚀 |
-| **Tg transformation** | 1st place solution: Tg += Tg.std() × 0.5644 | Major improvement |
+| **SMILES canonicalization** | Standardizes SMILES representations to avoid duplicates | Part of v85 improvement ✨ |
+| **Pseudo-labeled data (50K)** | BERT + AutoGluon + Uni-Mol ensemble predictions | Part of v85 improvement 🚀 |
+| **Tg transformation** | 2nd place solution: (9/5) × Tg + 45 | Major improvement |
 | **MAE objective** | Match competition metric exactly | +5-15% improvement |
 
-**Key insight:** Canonicalization ensures consistent molecular representations → pseudo-labels provide high-quality augmented data → ensemble + chemistry features capture polymer structure → **TIED WITH 1ST PLACE!** 🎯
+**Key insight:** Combining canonicalization + pseudo-labels with simple features + Random Forest ensemble delivered **0.07533 (Private) / 0.08139 (Public) - TIED WITH 1ST PLACE!** 🎯
+(Note: Individual improvement amounts for canonicalization and pseudo-labeling not separately quantified)
 
 ## Score Progress (Empirical)
 
@@ -88,21 +89,21 @@ python kaggle/kaggle_automate.py "Your message"
 |---------|--------------|------------------|--------|--------|
 | **v85** | **+ SMILES canonicalization + 50K pseudo-labeled data** | **0.07533 / 0.08139** | **↓ 4.3% ✅** | **🥇 TIED WITH 1ST PLACE!** |
 
-**Major breakthrough!** Integration of:
+**Key improvements in v85:**
 1. **SMILES Canonicalization** - Standardizes SMILES representations (e.g., CC(C) vs C(C)C both map to same canonical form)
    - Ensures consistent molecular representation across all samples
    - Reduces noise from duplicate molecular structures with different SMILES notations
-   - Improves model generalization by 0.5%
 
 2. **Pseudo-Labeled Dataset** - 50K high-quality predictions from ensemble (BERT + AutoGluon + Uni-Mol)
    - Massively expands training data without manual annotation
    - Leverages multiple model predictions for robustness
-   - Additional 0.3% improvement
+   - Provides diverse training examples for better generalization
 
-3. **1st Place Tg Transformation** - Switched from fixed (9/5)×x+45 to variance-adaptive
-   - Formula: `Tg += Tg.std() × 0.5644` 
-   - Adapts to actual prediction distribution instead of fixed formula
-   - Crucial for final score alignment
+3. **Tg Transformation** - Uses 2nd place winner's discovery: (9/5) × Tg + 45
+   - Corrects for train/test distribution shift in glass transition temperature
+   - Critical for competitive performance
+   
+**Note:** Individual improvement contributions (canonicalization +X%, pseudo-label +Y%) cannot be separated cleanly as both are integrated in the final v85 model.
 
 **Total improvement: 0.139 → 0.07533 = 45.8% error reduction** 🎉
 **Final leaderboard position: TIED WITH 1ST PLACE 🥇**
@@ -168,16 +169,16 @@ python -c "import torch; import torch_geometric; print(f'PyTorch: {torch.__versi
 ## 🏆 Best Kaggle Submission
 
 **`best.ipynb`** - **🥇 TIED WITH 1ST PLACE SOLUTION!**
-- **Model:** Random Forest Ensemble with 21 chemistry features
+- **Model:** Random Forest Ensemble with 21 chemistry features + Simple 10 features
 - **Private Score:** 0.07533 ⭐⭐
 - **Public Score:** 0.08139
 - **Key Enhancements:** 
   - SMILES canonicalization (standardized molecular representations)
   - 50K pseudo-labeled data (BERT + AutoGluon + Uni-Mol ensemble)
-  - 1st place Tg transformation (variance-adaptive: Tg += Tg.std() × 0.5644)
+  - 2nd place Tg transformation: (9/5) × Tg + 45
 - **Status:** Production-ready, deployed to Kaggle!
 
-This notebook achieved **45.8% total error reduction** from baseline (0.139 → 0.07533) and tied the 1st place leaderboard score through systematic combination of data augmentation, feature engineering, and canonicalization.
+This notebook achieved **45.8% total error reduction** from baseline (0.139 → 0.07533) and tied the 1st place leaderboard score through combination of data augmentation, canonicalization, and pseudo-labeling.
 
 ## Local Training
 
@@ -327,13 +328,13 @@ predictions = solution.apply_tg_transformation(predictions)
 - **Private:** 0.07533 🥇 (4.3% improvement over v53, 45.8% total from baseline)
 - **Public:** 0.08139
 - **Leaderboard:** **TIED WITH 1ST PLACE!**
-- **Training time:** 50 seconds per submission (5x ensemble, faster than XGBoost)
-- **Generalization:** 0.0061 private-public gap (excellent generalization!)
+- **Training time:** 50 seconds per submission (5x ensemble)
+- **Generalization:** 0.0061 private-public gap (excellent!)
 - **Key improvements:**
-  - Canonicalization: +0.5% (ensures consistent SMILES representation)
-  - Pseudo-labeled data: +0.3% (50K high-quality augmented samples)
-  - 1st place Tg transform: Major score boost (variance-adaptive)
-- **Key insight:** Canonicalization + pseudo-labeling + random forest ensemble = 1st place performance!
+  - Canonicalization: Ensures consistent SMILES representation
+  - Pseudo-labeled data (50K): High-quality augmented training samples
+  - 2nd place Tg transform: (9/5) × Tg + 45 correction
+- **Key insight:** Combining canonicalization + pseudo-labeling with simple features + Random Forest ensemble achieved 1st place performance!
 
 ## Next
 
