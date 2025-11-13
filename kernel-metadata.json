@@ -1,10 +1,10 @@
 {
   "id": "jihwano/polymer-v2-enhanced-tc-tg-augmentation",
   "title": "Polymer v2 Enhanced - Tc+Tg Augmentation",
-  "code_file": "polymer-v2-enhanced-tc-tg-augmentation.ipynb",
+  "code_file": "best.ipynb",
   "language": "python",
   "kernel_type": "notebook",
-  "is_private": true,
+  "is_private": false,
   "enable_gpu": false,
   "enable_tpu": false,
   "enable_internet": false,
@@ -12,7 +12,8 @@
     "wpixiu/rdkit-2025-3-3-cp311",
     "minatoyukinaxlisa/tc-smiles",
     "akihiroorita/tg-of-polymer-dataset",
-    "jihwano/more-data"
+    "jihwano/more-data",
+    "jsday96/pi1m-pseudolabels"
   ],
   "competition_sources": [
     "neurips-open-polymer-prediction-2025"
