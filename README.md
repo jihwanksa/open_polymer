@@ -312,13 +312,15 @@ predictions = solution.apply_tg_transformation(predictions)
 2. **TG-of-Polymer** (akihiroorita) - Tg glass transition temp
 3. **PI1070.csv** - Density & Rg from simulations
 4. **LAMALAB_curated** - Experimental Tg from literature (7,369 samples!)
+5. **PI1M_50000_v2.1.csv** (v85) - 50K pseudo-labeled samples from ensemble (BERT + AutoGluon + Uni-Mol)
 
 **Augmentation impact:**
-- Tg: 511 → 2,447 samples (+380%)
-- Density: 613 → 1,394 samples (+127%)
-- Rg: 614 → 1,684 samples (+174%)
-- Tc: 737 → 867 samples (+18%)
-- Total: 10,039 → 10,820 training samples (+7.7%)
+- Tg: 511 → 2,447 → 52,435 samples (+10,158%)
+- Density: 613 → 1,394 → 50,601 samples (+7,154%)
+- Rg: 614 → 1,684 → 50,602 samples (+7,153%)
+- Tc: 737 → 867 → 50,855 samples (+5,793%)
+- FFV: baseline → 57,018 samples
+- **Total (v85): 7,973 → 10,039 → 60,027 training samples (+652%!)**
 
 ### Metric Alignment Matters
 - Competition uses wMAE (weighted Mean Absolute Error)
