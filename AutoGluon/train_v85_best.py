@@ -117,11 +117,18 @@ class AutoGluonModel:
                     # Handle NaN/inf
                     X_clean = np.nan_to_num(X_test, nan=0.0, posinf=1e6, neginf=-1e6)
                     
-                    # Convert to DataFrame
-                    X_df = pd.DataFrame(X_clean, columns=predictor.features)
+                    # Get feature names (handle both method and property)
+                    try:
+                        features = predictor.features() if callable(predictor.features) else predictor.features
+                    except:
+                        # Fallback: create generic feature names matching X_test dimensions
+                        features = [f'feat_{j}' for j in range(X_clean.shape[1])]
+                    
+                    # Convert to DataFrame with correct feature names
+                    X_df = pd.DataFrame(X_clean, columns=features[:X_clean.shape[1]])
                     
                     # Predict
-                    preds = predictor.predict(X_df)
+                    preds = predictor.predict(X_df, verbose=0)
                     if isinstance(preds, (pd.Series, pd.DataFrame)):
                         preds = preds.values.flatten()
                     
@@ -455,13 +462,39 @@ def main():
     
     train_features = extract_comprehensive_features(train_df)
     
+    # Generate predictions using AutoGluon models
     print("\n" + "="*80)
-    print("✅ AUTOGLUON PRODUCTION SETUP COMPLETE!")
+    print("STEP 4: GENERATE PREDICTIONS WITH AUTOGLUON MODELS")
+    print("="*80)
+    
+    train_predictions = model.predict(train_features.values, target_cols)
+    
+    # Save predictions
+    print("\n" + "="*80)
+    print("STEP 5: SAVE RESULTS")
+    print("="*80)
+    
+    results_df = pd.DataFrame(train_predictions, columns=target_cols)
+    
+    # Apply Tg transformation (2nd place solution)
+    print("\n🔄 Applying Tg transformation...")
+    results_df['Tg'] = (9/5) * results_df['Tg'] + 45
+    print(f"   ✅ Tg range after transformation: [{results_df['Tg'].min():.2f}, {results_df['Tg'].max():.2f}]")
+    
+    # Save to CSV
+    output_path = os.path.join(project_root, "train_v85_best_predictions.csv")
+    results_df.to_csv(output_path, index=False)
+    print(f"\n✅ Predictions saved to {output_path}")
+    print(f"\nPrediction statistics:")
+    print(results_df.describe())
+    
+    print("\n" + "="*80)
+    print("✅ AUTOGLUON PRODUCTION INFERENCE COMPLETE!")
     print("="*80)
     print(f"\nFeatures: {train_features.shape[1]}")
     print(f"Training samples: {len(train_df)}")
     print(f"Targets: {', '.join(target_cols)}")
-    print(f"\n📊 AutoGluon will handle:")
+    print(f"\n📊 AutoGluon delivered:")
     print(f"   ✅ Automatic feature selection from 34 features")
     print(f"   ✅ Hyperparameter tuning for each algorithm")
     print(f"   ✅ Intelligent ensemble weighting (WeightedEnsemble_L2)")

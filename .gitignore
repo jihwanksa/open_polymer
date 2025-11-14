@@ -59,7 +59,8 @@ models/
 *.h5
 
 # Data files (use Git LFS or external storage)
-data/raw/*.csv
+data/*.csv
+data/raw/
 data/processed/
 
 # Results
