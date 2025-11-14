@@ -86,7 +86,12 @@ class AutoGluonModel:
                 predictor = TabularPredictor.load(target_path)
                 self.predictors[target] = predictor
                 print(f"✅")
-                print(f"   Features: {len(predictor.features)}")
+                # Get feature names (might be method or property depending on AutoGluon version)
+                try:
+                    features = predictor.features() if callable(predictor.features) else predictor.features
+                    print(f"   Features: {len(features)}")
+                except:
+                    print(f"   Features: N/A")
                 
             except Exception as e:
                 print(f"❌ Failed: {e}")
