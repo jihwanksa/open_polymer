@@ -10,11 +10,11 @@ This directory contains all source code for training and evaluating polymer prop
 - **Model:** Random Forest Ensemble + 21 chemistry features + 50K pseudo-labels
 - **Ready to use:** Your colleague can fork and run directly on Kaggle!
 
-**`train_v53_best.py`** (this directory - local training)
-- **Status:** Exactly replicates best.ipynb locally
+**`train_v85_best.py`** (this directory - local training)
+- **Status:** Exactly replicates best.ipynb locally (v85 = 1st place!)
 - **Score:** Trains model with 60K samples (including pseudo-labels)
 - **Time:** ~50 seconds to train
-- **Usage:** `python src/train_v53_best.py`
+- **Usage:** `python src/train_v85_best.py`
 
 ## 📁 Directory Structure
 
@@ -28,7 +28,7 @@ src/
 │
 ├── data_preprocessing.py       # Feature extraction & data processing
 ├── train.py                    # Traditional ML training pipeline
-├── train_v53_best.py          # Best RF model (replicates best.ipynb locally)
+├── train_v85_best.py          # Best RF model (1st place! replicates best.ipynb locally)
 ├── train_gnn_tuned.py         # GNN training with hyperparameters
 └── train_transformer.py       # Transformer training pipeline
 ```
@@ -300,7 +300,7 @@ python -c "import torch; import torch_geometric; print('✅ All dependencies OK'
 conda activate polymer
 
 # ⭐ BEST MODEL - Random Forest v85 (1st Place!) - 50 seconds
-python src/train_v53_best.py
+python src/train_v85_best.py
 
 # GNN with RDKit-enhanced features - 5-10 minutes
 python src/train_gnn_tuned.py
@@ -310,7 +310,7 @@ python src/train_transformer.py
 ```
 
 **Recommended Order:**
-1. **`train_v53_best.py`** ⭐ (fastest, BEST 1st place performance: 0.07533!)
+1. **`train_v85_best.py`** ⭐ (fastest, BEST 1st place performance: 0.07533!)
 2. `train_gnn_tuned.py` (medium time, interesting results)
 3. `train_transformer.py` (longest, optional)
 
@@ -318,13 +318,13 @@ python src/train_transformer.py
 
 | Script | Model | Time | Output | Features |
 |--------|-------|------|--------|----------|
-| `train_v53_best.py` | Random Forest Ensemble | ~50s | `models/random_forest_v53_best.pkl` | 21 chemistry features + augmentation |
+| `train_v85_best.py` | Random Forest Ensemble | ~50s | `models/random_forest_v85_best.pkl` | 21 chemistry + canon + pseudo |
 | `train_gnn_tuned.py` | Graph Neural Networks | ~5-10m | `models/gnn_best_tuned.pt` | 16 node + 6 edge features (RDKit) |
 | `train_transformer.py` | DistilBERT Transformer | ~20m | `models/transformer_model.pt` | SMILES tokenization (768-dim) |
 | `train.py` | XGBoost/Random Forest | ~2m | `models/{xgb,rf}_model.pkl` | Molecular descriptors + fingerprints |
 
 **When to use each:**
-- **`train_v53_best.py`** ⭐ **BEST - 1st Place!** 🥇
+- **`train_v85_best.py`** ⭐ **BEST - 1st Place!** 🥇
   - Achieves 0.07533 private score (tied 1st place on Kaggle!)
   - 60K training samples with pseudo-labels
   - SMILES canonicalization for consistency

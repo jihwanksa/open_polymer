@@ -184,13 +184,13 @@ This notebook achieved **45.8% total error reduction** from baseline (0.139 → 
 
 Train models locally to validate performance before pushing to Kaggle:
 
-### 1. Train Best Random Forest Model (v53)
+### 1. Train Best Random Forest Model (v85 - 1st Place!)
 ```bash
 conda activate polymer
-python src/train_v53_best.py
+python src/train_v85_best.py
 ```
-**Output:** `models/random_forest_v53_best.pkl` (the 4th place leaderboard model)
-**Score:** Private 0.07874 | Public 0.10354
+**Output:** `models/random_forest_v85_best.pkl` (the 1st place leaderboard model!)
+**Score:** Private 0.07533 | Public 0.08139
 **Time:** ~50 seconds
 **Features:** 21 chemistry-based features + data augmentation
 
@@ -380,9 +380,9 @@ Post-Processing:
   Tg transformation: (9/5) × Tg + 45  (2nd place discovery - critical!)
   
 Local Training:
-  Run `python src/train_v53_best.py` to train model locally
+  Run `python src/train_v85_best.py` to train model locally
   Time: ~50 seconds
-  Output: models/random_forest_v53_best.pkl
+  Output: models/random_forest_v85_best.pkl
 ```
 
 ## Commands Reference
