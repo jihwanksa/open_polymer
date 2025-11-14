@@ -42,6 +42,9 @@ python kaggle/kaggle_automate.py "Your message"
 | v7 | + 21 chemistry features (14th place insights) | 0.08008 | ↓ 3.1% ✅ | 6th 🏆 |
 
 **Total improvement: 0.139 → 0.08008 = 42.4% error reduction** 🎉
+### What's in v2
+- **Tg Transformation**: Uses 2nd place winner's discovery: (9/5) × Tg + 45
+- **Distribution shift**: Corrects for train/test distribution shift in glass transition temperature
 
 ### What's in v6 (Ensemble)
 - **Ensemble XGBoost**: 5 independent models per property with different random seeds
@@ -128,10 +131,6 @@ Built on v6, adds **11 chemistry-based features** inspired by 14th place solutio
    - Massively expands training data without manual annotation
    - Leverages multiple model predictions for robustness
    - Provides diverse training examples for better generalization
-
-3. **Tg Transformation** - Uses 2nd place winner's discovery: (9/5) × Tg + 45
-   - Corrects for train/test distribution shift in glass transition temperature
-   - Critical for competitive performance
    
 **Note:** Individual improvement contributions (canonicalization +X%, pseudo-label +Y%) cannot be separated cleanly as both are integrated in the final v85 model.
 
