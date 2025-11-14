@@ -279,50 +279,57 @@ def load_and_augment_data():
     except Exception as e:
         print(f"   ⚠️  Tg data not found: {e}")
     
-    # Augment with PI1070 and LAMALAB data
+    # Augment with PI1070 (Density + Rg) and LAMALAB (Tg)
     print("\n📂 Loading additional external datasets...")
     try:
-        # PI1070 (Density + Rg)
-        pi1070_df = pd.read_csv(os.path.join(project_root, 'data/raw/train_supplement/dataset1.csv'))
-        pi1070_subset = pi1070_df[['smiles', 'density', 'Rg']].copy()
-        pi1070_subset = pi1070_subset.rename(columns={'smiles': 'SMILES'})
-        
         train_smiles_set = set(train_df['SMILES'])
-        pi1070_new = pi1070_subset[~pi1070_subset['SMILES'].isin(train_smiles_set)].copy()
         
-        for idx, row in pi1070_new.iterrows():
-            if pd.notna(row['density']) or pd.notna(row['Rg']):
-                train_df = pd.concat([train_df, pd.DataFrame([{
-                    'SMILES': row['SMILES'],
-                    'Tg': np.nan,
-                    'FFV': np.nan,
-                    'Tc': np.nan,
-                    'Density': row['density'] if pd.notna(row['density']) else np.nan,
-                    'Rg': row['Rg'] if pd.notna(row['Rg']) else np.nan
-                }])], ignore_index=True)
-        
-        print(f"   ✅ Added {len(pi1070_new)} PI1070 samples")
+        # PI1070 (Density + Rg) - has 'density' and 'Rg' columns
+        try:
+            pi1070_df = pd.read_csv(os.path.join(project_root, 'data/PI1070.csv'))
+            pi1070_subset = pi1070_df[['smiles', 'density', 'Rg']].copy()
+            pi1070_subset = pi1070_subset.rename(columns={'smiles': 'SMILES'})
+            pi1070_new = pi1070_subset[~pi1070_subset['SMILES'].isin(train_smiles_set)].copy()
+            
+            for idx, row in pi1070_new.iterrows():
+                if pd.notna(row['density']) or pd.notna(row['Rg']):
+                    train_df = pd.concat([train_df, pd.DataFrame([{
+                        'SMILES': row['SMILES'],
+                        'Tg': np.nan,
+                        'FFV': np.nan,
+                        'Tc': np.nan,
+                        'Density': row['density'] if pd.notna(row['density']) else np.nan,
+                        'Rg': row['Rg'] if pd.notna(row['Rg']) else np.nan
+                    }])], ignore_index=True)
+            
+            print(f"   ✅ Added {len(pi1070_new)} PI1070 samples")
+        except Exception as e:
+            print(f"   ⚠️  PI1070 loading failed: {e}")
         
         # LAMALAB (Tg)
-        lamalab_df = pd.read_csv(os.path.join(project_root, 'data/raw/train_supplement/dataset2.csv'))
-        lamalab_subset = lamalab_df[['PSMILES', 'labels.Exp_Tg(K)']].copy()
-        lamalab_subset = lamalab_subset.rename(columns={'PSMILES': 'SMILES', 'labels.Exp_Tg(K)': 'Tg'})
-        lamalab_subset['Tg'] = lamalab_subset['Tg'] - 273.15  # Convert K to C
-        
-        lamalab_new = lamalab_subset[~lamalab_subset['SMILES'].isin(train_smiles_set)].copy()
-        lamalab_new_valid = lamalab_new[lamalab_new['Tg'].notna()].copy()
-        
-        for idx, row in lamalab_new_valid.iterrows():
-            train_df = pd.concat([train_df, pd.DataFrame([{
-                'SMILES': row['SMILES'],
-                'Tg': row['Tg'],
-                'FFV': np.nan,
-                'Tc': np.nan,
-                'Density': np.nan,
-                'Rg': np.nan
-            }])], ignore_index=True)
-        
-        print(f"   ✅ Added {len(lamalab_new_valid)} LAMALAB Tg samples")
+        try:
+            lamalab_df = pd.read_csv(os.path.join(project_root, 'data/LAMALAB_CURATED_Tg_structured_polymerclass.csv'))
+            lamalab_subset = lamalab_df[['PSMILES', 'labels.Exp_Tg(K)']].copy()
+            lamalab_subset = lamalab_subset.rename(columns={'PSMILES': 'SMILES', 'labels.Exp_Tg(K)': 'Tg'})
+            lamalab_subset['Tg'] = lamalab_subset['Tg'] - 273.15  # Convert K to C
+            
+            lamalab_new = lamalab_subset[~lamalab_subset['SMILES'].isin(train_smiles_set)].copy()
+            lamalab_new_valid = lamalab_new[lamalab_new['Tg'].notna()].copy()
+            
+            for idx, row in lamalab_new_valid.iterrows():
+                train_df = pd.concat([train_df, pd.DataFrame([{
+                    'SMILES': row['SMILES'],
+                    'Tg': row['Tg'],
+                    'FFV': np.nan,
+                    'Tc': np.nan,
+                    'Density': np.nan,
+                    'Rg': np.nan
+                }])], ignore_index=True)
+            
+            print(f"   ✅ Added {len(lamalab_new_valid)} LAMALAB Tg samples")
+        except Exception as e:
+            print(f"   ⚠️  LAMALAB loading failed: {e}")
+            
     except Exception as e:
         print(f"   ⚠️  Additional datasets error: {e}")
     
