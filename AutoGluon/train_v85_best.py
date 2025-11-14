@@ -26,13 +26,14 @@ os.environ['CUDA_VISIBLE_DEVICES'] = ''
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['MPS_ENABLED'] = '0'
 
-# Try to import RDKit for SMILES canonicalization
+# Try to import RDKit for SMILES canonicalization and descriptors
 try:
     from rdkit import Chem
+    from rdkit.Chem import Descriptors
     RDKIT_AVAILABLE = True
 except ImportError:
     RDKIT_AVAILABLE = False
-    print("⚠️  RDKit not available - SMILES canonicalization will be skipped")
+    print("⚠️  RDKit not available - will use fallback features")
 
 
 def make_smile_canonical(smile):
@@ -137,16 +138,16 @@ class AutoGluonModel:
         return predictions
 
 
-def create_chemistry_features(df):
-    """Create 21 chemistry-based features from SMILES (v53 configuration)"""
+def extract_comprehensive_features(df):
+    """Extract 34 comprehensive features: 10 simple + 11 chemistry + 13 RDKit descriptors"""
     features = []
     
-    print("Creating chemistry-based features...")
+    print("Extracting 34 comprehensive features (10 simple + 11 chemistry + 13 RDKit)...")
     for idx, smiles in tqdm(df['SMILES'].items(), total=len(df)):
         try:
             smiles_str = str(smiles) if pd.notna(smiles) else ""
             
-            # Basic counts (10 features)
+            # 10 simple string-based features
             basic = {
                 'smiles_length': len(smiles_str),
                 'carbon_count': smiles_str.count('C'),
@@ -160,7 +161,7 @@ def create_chemistry_features(df):
                 'branch_count': smiles_str.count('('),
             }
             
-            # Chemistry-based features (11 additional features)
+            # 11 chemistry-based features
             num_side_chains = smiles_str.count('(')
             backbone_carbons = smiles_str.count('C') - smiles_str.count('C(')
             aromatic_count = smiles_str.count('c')
@@ -174,11 +175,10 @@ def create_chemistry_features(df):
                           smiles_str.count('N') * 14 + smiles_str.count('S') * 32 + smiles_str.count('F') * 19)
             branching_ratio = num_side_chains / max(backbone_carbons, 1)
             
-            # Combine all features (21 total)
-            desc = {
-                **basic,
+            chemistry = {
                 'num_side_chains': num_side_chains,
                 'backbone_carbons': backbone_carbons,
+                'branching_ratio': branching_ratio,
                 'aromatic_count': aromatic_count,
                 'h_bond_donors': h_bond_donors,
                 'h_bond_acceptors': h_bond_acceptors,
@@ -187,19 +187,56 @@ def create_chemistry_features(df):
                 'halogen_count': halogen_count,
                 'heteroatom_count': heteroatom_count,
                 'mw_estimate': mw_estimate,
-                'branching_ratio': branching_ratio,
             }
-            features.append(desc)
+            
+            # 13 RDKit descriptors
+            rdkit_desc = {}
+            if RDKIT_AVAILABLE and Chem is not None:
+                try:
+                    mol = Chem.MolFromSmiles(smiles_str)
+                    if mol is not None:
+                        rdkit_desc = {
+                            'MolWt': Descriptors.MolWt(mol),
+                            'LogP': Descriptors.MolLogP(mol),
+                            'NumHDonors': Descriptors.NumHDonors(mol),
+                            'NumHAcceptors': Descriptors.NumHAcceptors(mol),
+                            'NumRotatableBonds': Descriptors.NumRotatableBonds(mol),
+                            'NumAromaticRings': Descriptors.NumAromaticRings(mol),
+                            'TPSA': Descriptors.TPSA(mol),
+                            'NumSaturatedRings': Descriptors.NumSaturatedRings(mol),
+                            'NumAliphaticRings': Descriptors.NumAliphaticRings(mol),
+                            'RingCount': Descriptors.RingCount(mol),
+                            'FractionCsp3': Descriptors.FractionCsp3(mol),
+                            'NumHeteroatoms': Descriptors.NumHeteroatoms(mol),
+                            'BertzCT': Descriptors.BertzCT(mol),
+                        }
+                        for k, v in rdkit_desc.items():
+                            if pd.isna(v) or np.isinf(v):
+                                rdkit_desc[k] = 0.0
+                except:
+                    rdkit_desc = {k: 0.0 for k in ['MolWt', 'LogP', 'NumHDonors', 'NumHAcceptors', 
+                                                   'NumRotatableBonds', 'NumAromaticRings', 'TPSA',
+                                                   'NumSaturatedRings', 'NumAliphaticRings', 'RingCount',
+                                                   'FractionCsp3', 'NumHeteroatoms', 'BertzCT']}
+            else:
+                rdkit_desc = {k: 0.0 for k in ['MolWt', 'LogP', 'NumHDonors', 'NumHAcceptors', 
+                                               'NumRotatableBonds', 'NumAromaticRings', 'TPSA',
+                                               'NumSaturatedRings', 'NumAliphaticRings', 'RingCount',
+                                               'FractionCsp3', 'NumHeteroatoms', 'BertzCT']}
+            
+            # Combine all 34 features
+            features.append({**basic, **chemistry, **rdkit_desc})
         except:
-            # Fallback: zeros
+            # Fallback: all zeros (34 features)
             features.append({
-                'smiles_length': 0, 'carbon_count': 0, 'nitrogen_count': 0,
-                'oxygen_count': 0, 'sulfur_count': 0, 'fluorine_count': 0,
-                'ring_count': 0, 'double_bond_count': 0, 'triple_bond_count': 0,
-                'branch_count': 0, 'num_side_chains': 0, 'backbone_carbons': 0,
-                'aromatic_count': 0, 'h_bond_donors': 0, 'h_bond_acceptors': 0,
-                'num_rings': 0, 'single_bonds': 0, 'halogen_count': 0,
-                'heteroatom_count': 0, 'mw_estimate': 0, 'branching_ratio': 0,
+                'smiles_length': 0, 'carbon_count': 0, 'nitrogen_count': 0, 'oxygen_count': 0,
+                'sulfur_count': 0, 'fluorine_count': 0, 'ring_count': 0, 'double_bond_count': 0,
+                'triple_bond_count': 0, 'branch_count': 0, 'num_side_chains': 0, 'backbone_carbons': 0,
+                'branching_ratio': 0, 'aromatic_count': 0, 'h_bond_donors': 0, 'h_bond_acceptors': 0,
+                'num_rings': 0, 'single_bonds': 0, 'halogen_count': 0, 'heteroatom_count': 0,
+                'mw_estimate': 0, 'MolWt': 0, 'LogP': 0, 'NumHDonors': 0, 'NumHAcceptors': 0,
+                'NumRotatableBonds': 0, 'NumAromaticRings': 0, 'TPSA': 0, 'NumSaturatedRings': 0,
+                'NumAliphaticRings': 0, 'RingCount': 0, 'FractionCsp3': 0, 'NumHeteroatoms': 0, 'BertzCT': 0
             })
     
     features_df = pd.DataFrame(features, index=df.index)
@@ -411,12 +448,12 @@ def main():
     
     train_df, _ = load_and_augment_data()
     
-    # Create features
+    # Create features (34 comprehensive features with RDKit)
     print("\n" + "="*80)
-    print("STEP 3: CREATE FEATURES")
+    print("STEP 3: EXTRACT COMPREHENSIVE FEATURES (RDKit Enhanced)")
     print("="*80)
     
-    train_features = create_chemistry_features(train_df)
+    train_features = extract_comprehensive_features(train_df)
     
     print("\n" + "="*80)
     print("✅ AUTOGLUON PRODUCTION SETUP COMPLETE!")
