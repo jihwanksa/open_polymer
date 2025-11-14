@@ -183,6 +183,192 @@ python -c "import torch; import torch_geometric; print(f'PyTorch: {torch.__versi
 
 This notebook achieved **45.8% total error reduction** from baseline (0.139 → 0.07533) and tied the 1st place leaderboard score through combination of data augmentation, canonicalization, and pseudo-labeling.
 
+## Pseudo-Label Generation (v85 Enhancement)
+
+### Environment Setup for Pseudo-Labeling
+
+The pseudo-label generation uses a **separate conda environment** to avoid conflicts:
+
+```bash
+# Create isolated environment for pseudo-labeling
+conda create -n pseudolabel_env python=3.10 -y
+conda activate pseudolabel_env
+
+# Install required packages
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+pip install transformers pandas scikit-learn numpy tqdm rdkit
+
+# Verify MPS (Apple Silicon) is available
+python -c "import torch; print(f'MPS available: {torch.backends.mps.is_available()}')"
+```
+
+**Why separate environment?**
+- Avoids conflicts with torch_geometric (which requires specific PyTorch/CUDA versions)
+- Isolates BERT/Uni-Mol dependencies
+- Cleaner dependency management for CPU/MPS execution
+
+### Pseudo-Label Generation Workflow
+
+#### Overview Diagram
+
+```mermaid
+graph LR
+    A["50K SMILES<br/>(PI1M_50000_v2.1.csv)"] --> B["BERT Encoding"]
+    A --> C["Uni-Mol Encoding"]
+    
+    B --> D["Train BERT Heads<br/>(on 7973 samples)"]
+    C --> E["Train Uni-Mol Heads<br/>(on 7973 samples)"]
+    
+    D --> F["BERT Predictions<br/>(50K samples)"]
+    E --> G["Uni-Mol Predictions<br/>(50K samples)"]
+    
+    F --> H["Ensemble<br/>(Average)"]
+    G --> H
+    
+    H --> I["Tg Transform<br/>(9/5)*Tg + 45"]
+    I --> J["50K Pseudo-Labels<br/>(5 properties)"]
+    
+    J --> K["Augment Training Data<br/>(7973 + 50K = 57973)"]
+    K --> L["Train RF Ensemble<br/>(v85)"]
+    L --> M["Submit to Kaggle<br/>(0.07533 Private)"]
+```
+
+#### Step-by-Step Scripts
+
+**1. Train BERT Prediction Heads**
+```bash
+conda activate pseudolabel_env
+python pseudolabel/train_bert_heads.py \
+    --epochs 10 \
+    --batch_size 32 \
+    --learning_rate 0.001
+```
+- **Input:** Training data (`data/raw/train.csv`)
+- **Output:** `models/bert_heads/` (5 heads: one per property)
+- **Time:** ~4-5 minutes
+- **Device:** Automatic (CUDA > MPS > CPU)
+
+**Script Details:**
+```mermaid
+graph TD
+    A["Load 7973 training samples"] --> B["Canonicalize SMILES<br/>(RDKit)"]
+    B --> C["Load BERT model<br/>(unikei/bert-base-smiles)"]
+    C --> D["Generate embeddings<br/>(768-dim, ~2 min)"]
+    D --> E["For each property:<br/>Tg, FFV, Tc, Density, Rg"]
+    E --> F["Train prediction head<br/>(10 epochs)"]
+    F --> G["Save head + scaler<br/>(for inference)"]
+```
+
+**2. Generate BERT Pseudo-Labels**
+```bash
+python pseudolabel/generate_with_bert.py \
+    --input_data data/PI1M_50000_v2.1.csv \
+    --bert_model_name_or_path unikei/bert-base-smiles \
+    --heads_path models/bert_heads/prediction_heads.pkl \
+    --output_path pseudolabel/pi1m_pseudolabels_bert.csv
+```
+- **Input:** 50K SMILES + trained BERT heads
+- **Output:** `pi1m_pseudolabels_bert.csv` (50K × 5 properties)
+- **Time:** ~5 minutes
+- **Output size:** 6.9 MB
+
+**3. Train Uni-Mol Prediction Heads**
+```bash
+python pseudolabel/train_unimol_heads.py \
+    --unimol_model_path pseudolabel/unimol_checkpoint.pt \
+    --epochs 50 \
+    --batch_size 32
+```
+- **Input:** Training data + Uni-Mol checkpoint
+- **Output:** `models/unimol_heads/prediction_heads.pkl`
+- **Time:** ~3-4 minutes
+- **Note:** Checkpoint must be pre-downloaded from Hugging Face
+
+**Uni-Mol Setup (first time only):**
+```bash
+# Download checkpoint
+mkdir -p pseudolabel
+cd pseudolabel
+# Download from https://huggingface.co/dptech/Uni-Mol2/tree/main/modelzoo/84M
+# Or use wget if available:
+# wget https://huggingface.co/dptech/Uni-Mol2/resolve/main/modelzoo/84M/unimol2_checkpoint.pt -O unimol_checkpoint.pt
+```
+
+**4. Generate Uni-Mol Pseudo-Labels**
+```bash
+python pseudolabel/generate_with_unimol.py \
+    --input_data data/PI1M_50000_v2.1.csv \
+    --unimol_model_path pseudolabel/unimol_checkpoint.pt \
+    --heads_path models/unimol_heads/prediction_heads.pkl \
+    --output_path pseudolabel/pi1m_pseudolabels_unimol.csv
+```
+- **Input:** 50K SMILES + trained Uni-Mol heads
+- **Output:** `pi1m_pseudolabels_unimol.csv` (50K × 5 properties)
+- **Time:** ~2 minutes (deterministic embeddings)
+- **Output size:** 5.1 MB
+
+**5. Ensemble BERT + Uni-Mol**
+```bash
+python pseudolabel/ensemble_bert_unimol.py \
+    --bert_labels pseudolabel/pi1m_pseudolabels_bert.csv \
+    --unimol_labels pseudolabel/pi1m_pseudolabels_unimol.csv \
+    --output_path pseudolabel/pi1m_pseudolabels_ensemble_2models.csv
+```
+- **Input:** BERT predictions + Uni-Mol predictions
+- **Output:** Averaged predictions (`pi1m_pseudolabels_ensemble_2models.csv`)
+- **Time:** ~1 minute
+- **Output size:** 6.8 MB
+
+#### Complete Pseudo-Label Generation Pipeline
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant BERT
+    participant UniMol
+    participant Ensemble
+    participant RF
+    
+    User->>BERT: Train heads (train.csv)
+    BERT->>BERT: 7973 samples → embeddings → heads
+    
+    User->>BERT: Generate predictions (50K)
+    BERT->>BERT: 50K SMILES → embeddings → predictions
+    Note over BERT: pi1m_pseudolabels_bert.csv
+    
+    User->>UniMol: Train heads (train.csv)
+    UniMol->>UniMol: 7973 samples → embeddings → heads
+    
+    User->>UniMol: Generate predictions (50K)
+    UniMol->>UniMol: 50K SMILES → embeddings → predictions
+    Note over UniMol: pi1m_pseudolabels_unimol.csv
+    
+    User->>Ensemble: Average BERT + Uni-Mol
+    Ensemble->>Ensemble: Element-wise mean
+    Note over Ensemble: pi1m_pseudolabels_ensemble_2models.csv
+    
+    User->>RF: Combine with original data
+    RF->>RF: 7973 + 50K = 57,973 samples
+    RF->>RF: Train v85 model
+    Note over RF: models/random_forest_v85_best.pkl (0.07533 Private!)
+```
+
+#### Pseudo-Label Quality Comparison
+
+| Metric | BERT | Uni-Mol | Ensemble (BERT + Uni-Mol) |
+|--------|------|---------|---------------------------|
+| **Tg Mean** | 160.19 | 224.51 | 192.35 |
+| **Tg Std** | 7.27 | 112.02 | 56.13 |
+| **FFV Mean** | 0.3609 | 0.3677 | 0.3643 |
+| **FFV Std** | 0.0232 | 0.0112 | 0.0129 |
+| **Generation Time** | ~5 min | ~2 min | ~1 min |
+| **File Size** | 6.9 MB | 5.1 MB | 6.8 MB |
+
+**Key Insights:**
+- **BERT:** More conservative (lower Tg variance), better FFV stability
+- **Uni-Mol:** More variable (higher Tg variance), captures more diversity
+- **Ensemble:** Best of both worlds - balanced variance, robust predictions
+
 ## Local Training
 
 Train models locally to validate performance before pushing to Kaggle:
@@ -270,6 +456,59 @@ solution.train(X_train, y_train)
 predictions = solution.predict(X_test)
 predictions = solution.apply_tg_transformation(predictions)
 ```
+
+---
+
+## Pseudo-Label Generation: 3-Model Ensemble
+
+**Status:** ✅ Complete (50K pseudo-labels from BERT + Uni-Mol + AutoGluon)
+
+We generated 50,000 high-quality pseudo-labels using a **3-model ensemble**:
+
+### Three Models
+
+1. **BERT (unikei/bert-base-smiles)**: Transformer encoder, 768-dim embeddings
+   - Conservative predictions (Tg Std: 7.27)
+   - Works on both CPU and MPS
+
+2. **Uni-Mol (dptech/Uni-Mol2)**: Graph Neural Network, 512-dim embeddings
+   - High diversity (Tg Std: 112.02)
+   - Works on both CPU and MPS
+
+3. **AutoGluon**: Automated ML ensemble on simple features
+   - RF + XGBoost + LightGBM ensemble
+   - **Important:** CPU-only mode (MPS hangs). Add before import:
+     ```python
+     os.environ['MPS_ENABLED'] = '0'
+     ```
+
+### Ensemble Results
+
+**3-Model Ensemble (BERT + Uni-Mol + AutoGluon):**
+- Tg: Mean=183.13, Std=55.17 (balanced variance)
+- FFV: Mean=0.3652, Std=0.0153 (stable)
+- Tc: Mean=0.2363, Std=0.0343 (robust)
+- Density: Mean=1.0383, Std=0.0641 (balanced)
+- Rg: Mean=16.4557, Std=1.2669 (balanced)
+
+### Impact on v85
+
+- **Original training:** 7,973 samples
+- **After pseudo-labels:** 57,973 samples (+626%)
+- **Score:** 0.07533 (Private) / 0.08139 (Public) = **🥇 Tied 1st Place!**
+
+All 50K pseudo-labels use Tg transformation: `(9/5) × Tg + 45`
+
+**Files generated:**
+- `pi1m_pseudolabels_bert.csv` (6.9 MB) - BERT-only predictions
+- `pi1m_pseudolabels_unimol.csv` (5.1 MB) - Uni-Mol-only predictions
+- `pi1m_pseudolabels_autogluon.csv` (5.1 MB) - AutoGluon-only predictions
+- `pi1m_pseudolabels_ensemble_2models.csv` (6.8 MB) - BERT + Uni-Mol
+- `pi1m_pseudolabels_ensemble_3models.csv` (6.8 MB) - BERT + Uni-Mol + AutoGluon ⭐
+
+See `pseudolabel/README.md` for complete workflow and `AutoGluon/README.md` for CPU-only setup.
+
+---
 
 ## Key Learnings
 

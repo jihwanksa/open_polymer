@@ -396,10 +396,12 @@ def load_and_augment_data():
     
     train_df = train_df.reset_index(drop=True)
     
-    # Load and augment with pseudo-labeled dataset (v85 NEW!)
+    # Load and augment with pseudo-labeled dataset (v85 ENHANCED with 3-model ensemble!)
     print("\n📂 Loading pseudo-labeled dataset...")
+    print("   Using 3-model ensemble: BERT + Uni-Mol + 21-feature AutoGluon")
     try:
         pseudo_paths = [
+            os.path.join(project_root, 'pseudolabel/pi1m_pseudolabels_ensemble_3models.csv'),
             os.path.join(project_root, 'data/raw/PI1M_50000_v2.1.csv'),
             os.path.join(project_root, 'data/PI1M_50000_v2.1.csv'),
         ]
