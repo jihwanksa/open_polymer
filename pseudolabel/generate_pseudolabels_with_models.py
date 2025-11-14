@@ -89,18 +89,14 @@ def extract_features_from_smiles(smiles: str) -> Dict[str, float]:
         return None
 
 
-def load_bert_model(model_path: str):
-    """Load BERT model for SMILES encoding."""
-    if not model_path or not Path(model_path).exists():
-        print(f"⚠️  BERT model not found at {model_path}")
-        return None
-    
+def load_bert_model(model_name_or_path: str = "unikei/bert-base-smiles"):
+    """Load BERT model for SMILES encoding from Hugging Face."""
     try:
-        print(f"   Loading BERT from {model_path}...")
-        from transformers import AutoModel, AutoTokenizer
+        print(f"   Loading BERT from {model_name_or_path}...")
+        from transformers import AutoTokenizer, AutoModelForPreTraining
         
-        tokenizer = AutoTokenizer.from_pretrained(model_path)
-        model = AutoModel.from_pretrained(model_path)
+        tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
+        model = AutoModelForPreTraining.from_pretrained(model_name_or_path)
         print(f"   ✅ BERT loaded successfully")
         
         return {'model': model, 'tokenizer': tokenizer}
@@ -170,20 +166,25 @@ def predict_with_autogluon(predictor, features_dict: Dict[str, float]) -> Option
         return None
 
 
-def load_unimol_model(model_path: str):
+def load_unimol_model(model_path: str = "pseudolabel/unimol_checkpoint.pt"):
     """Load Uni-Mol model for molecular property prediction."""
-    if not model_path or not Path(model_path).exists():
+    if not Path(model_path).exists():
         print(f"⚠️  Uni-Mol model not found at {model_path}")
+        print(f"   Download from: https://huggingface.co/dptech/Uni-Mol2/tree/main/modelzoo/84M")
         return None
     
     try:
         print(f"   Loading Uni-Mol from {model_path}...")
-        # Actual Uni-Mol loading requires specific setup from their repository
-        # This is a placeholder for the actual implementation
-        print(f"   ⚠️  Uni-Mol loading not implemented - requires special setup")
-        return None
+        import torch
+        
+        # Load checkpoint
+        checkpoint = torch.load(model_path, map_location='cpu')
+        print(f"   ✅ Uni-Mol checkpoint loaded successfully")
+        
+        return checkpoint
     except Exception as e:
         print(f"   ❌ Failed to load Uni-Mol: {e}")
+        print(f"   Make sure the file is a valid PyTorch checkpoint")
         return None
 
 
@@ -219,7 +220,8 @@ def main(args):
     # Load models
     print("\n📦 Loading pre-trained models...")
     
-    bert_model = load_bert_model(args.bert_model) if args.bert_model else None
+    # Load BERT (from Hugging Face by default)
+    bert_model = load_bert_model("unikei/bert-base-smiles") if args.use_bert else None
     
     print("\n   Loading AutoGluon models...")
     ag_tg = load_autogluon_model(args.autogluon_tg, 'Tg') if args.autogluon_tg else None
@@ -228,7 +230,8 @@ def main(args):
     ag_density = load_autogluon_model(args.autogluon_density, 'Density') if args.autogluon_density else None
     ag_rg = load_autogluon_model(args.autogluon_rg, 'Rg') if args.autogluon_rg else None
     
-    unimol_model = load_unimol_model(args.unimol_model) if args.unimol_model else None
+    # Load Uni-Mol from local checkpoint
+    unimol_model = load_unimol_model("pseudolabel/unimol_checkpoint.pt") if args.use_unimol else None
     
     # Check if at least one model is available
     models_available = [bert_model, ag_tg, ag_ffv, ag_tc, ag_density, ag_rg, unimol_model]
@@ -314,7 +317,30 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Generate pseudo-labels using pre-trained models"
+        description="Generate pseudo-labels using pre-trained models",
+        epilog="""
+Examples:
+
+  1. Use BERT + AutoGluon models:
+     python pseudolabel/generate_pseudolabels_with_models.py \\
+         --use_bert \\
+         --autogluon_tg models/autogluon_Tg \\
+         --autogluon_ffv models/autogluon_FFV \\
+         --autogluon_tc models/autogluon_Tc \\
+         --autogluon_density models/autogluon_Density \\
+         --autogluon_rg models/autogluon_Rg
+
+  2. Use all three models (BERT + AutoGluon + Uni-Mol):
+     python pseudolabel/generate_pseudolabels_with_models.py \\
+         --use_bert \\
+         --use_unimol \\
+         --autogluon_tg models/autogluon_Tg \\
+         --autogluon_ffv models/autogluon_FFV \\
+         --autogluon_tc models/autogluon_Tc \\
+         --autogluon_density models/autogluon_Density \\
+         --autogluon_rg models/autogluon_Rg
+        """,
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
     
     parser.add_argument(
@@ -324,10 +350,10 @@ if __name__ == "__main__":
         help="Path to input CSV with SMILES"
     )
     parser.add_argument(
-        "--bert_model",
-        type=str,
-        default=None,
-        help="Path to BERT model directory"
+        "--use_bert",
+        action="store_true",
+        default=False,
+        help="Use BERT model (from unikei/bert-base-smiles)"
     )
     parser.add_argument(
         "--autogluon_tg",
@@ -360,10 +386,10 @@ if __name__ == "__main__":
         help="Path to AutoGluon Rg model"
     )
     parser.add_argument(
-        "--unimol_model",
-        type=str,
-        default=None,
-        help="Path to Uni-Mol model"
+        "--use_unimol",
+        action="store_true",
+        default=False,
+        help="Use Uni-Mol model (from pseudolabel/unimol_checkpoint.pt)"
     )
     parser.add_argument(
         "--output_path",
