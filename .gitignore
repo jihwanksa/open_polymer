@@ -59,7 +59,8 @@ models/
 *.h5
 
 # Data files (use Git LFS or external storage)
-data/*.csv
+# CSV files in data/ are tracked and needed for reproducibility
+# data/*.csv  <- Keep CSV files
 data/raw/
 data/processed/
 
