@@ -48,10 +48,11 @@ env/
 Thumbs.db
 
 # Model files (too large for git)
-models/*.pkl
-models/*.pt
-models/*.pth
-models/*.h5
+models/
+*.pkl
+*.pt
+*.pth
+*.h5
 
 # Data files (use Git LFS or external storage)
 data/raw/*.csv

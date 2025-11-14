@@ -1,14 +1,12 @@
 """
-Train the best Random Forest model (v85) for production use
-This script replicates the exact configuration from the best Kaggle submission (1st place tied!)
+Use AutoGluon production models for best performance.
 
-v85 improvements:
-- SMILES canonicalization for consistent representation
-- 50K pseudo-labeled dataset (BERT + AutoGluon + Uni-Mol ensemble)
-- 21 chemistry-based features (10 simple + 11 polymer-specific)
-- Random Forest ensemble (5 models per property)
-- Tg transformation (9/5)x + 45
-- Private Score: 0.07533, Public Score: 0.08139 (TIED WITH 1ST PLACE!)
+This script uses pre-trained AutoGluon models from train_autogluon_production.py:
+- AutoGluon training: 60K+ samples, 34 features (10 simple + 11 hand-crafted + 13 RDKit)
+- Best model: WeightedEnsemble_L2 (stacked ensemble of 8 base models)
+- Features: Automatic feature selection and hyperparameter tuning
+- Tg transformation (9/5)x + 45 for distribution shift correction
+- Expected improvement over v85 Random Forest through AutoML optimization
 """
 
 import os
@@ -16,13 +14,17 @@ import sys
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from tqdm import tqdm
 import pickle
 import warnings
 warnings.filterwarnings('ignore')
+
+# Force CPU-only mode for AutoGluon (avoids MPS hanging on Apple Silicon)
+os.environ['CUDA_VISIBLE_DEVICES'] = ''
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['MPS_ENABLED'] = '0'
 
 # Try to import RDKit for SMILES canonicalization
 try:
@@ -47,162 +49,87 @@ def make_smile_canonical(smile):
         return np.nan
 
 
-class RobustRandomForestEnsemble:
+class AutoGluonModel:
     """
-    Random Forest ensemble model - Best performing model (v85)
-    🥇 TIED WITH 1ST PLACE! Private Score: 0.07533, Public Score: 0.08139
+    AutoGluon model wrapper for production inference.
     
-    Key improvements over v53:
-    - SMILES canonicalization for consistent representation
-    - 50K pseudo-labeled dataset integration
-    - Improved feature engineering documentation
+    🚀 AutoGluon Production Configuration:
+    - Models: WeightedEnsemble_L2 (stacked ensemble of 8 base models)
+    - Training: 60K+ samples, 34 features (10 simple + 11 hand-crafted + 13 RDKit)
+    - Hyperparameter: Automatically tuned by AutoGluon
+    - Preset: medium_quality (balanced quality vs time)
     """
     
-    def __init__(self, n_targets=5, n_ensemble=5):
-        self.n_targets = n_targets
-        self.n_ensemble = n_ensemble
-        self.models = {}
-        self.scalers = {}
-        self.feature_names = None
+    def __init__(self, model_dir="models/autogluon_production"):
+        self.model_dir = model_dir
+        self.predictors = {}
+        self.target_cols = ['Tg', 'FFV', 'Tc', 'Density', 'Rg']
     
-    def train(self, X_train, y_train, X_val, y_val, target_names):
-        """Train ensemble of Random Forest models for each target"""
-        results = {}
+    def load(self):
+        """Load pre-trained AutoGluon models"""
+        try:
+            from autogluon.tabular import TabularPredictor
+        except ImportError:
+            print("❌ AutoGluon not installed")
+            return False
         
-        for i, target in enumerate(target_names):
-            print(f"\n{'='*70}")
-            print(f"Training Random Forest Ensemble for {target}...")
-            print(f"{'='*70}")
-            print(f"Training {self.n_ensemble} models with different random seeds...")
+        print("\n" + "="*70)
+        print("LOADING AUTOGLUON PRODUCTION MODELS")
+        print("="*70)
+        
+        all_loaded = True
+        for target in self.target_cols:
+            target_path = f"{self.model_dir}/{target}"
             
             try:
-                y_train_target = y_train[:, i]
-                y_val_target = y_val[:, i]
-                
-                train_mask = ~np.isnan(y_train_target)
-                val_mask = ~np.isnan(y_val_target)
-                
-                if train_mask.sum() == 0:
-                    print(f"⚠️  No training data for {target}")
-                    continue
-                
-                X_train_filtered = X_train[train_mask]
-                y_train_filtered = y_train_target[train_mask]
-                
-                # Scale features
-                scaler = StandardScaler()
-                X_train_scaled = scaler.fit_transform(X_train_filtered)
-                self.scalers[target] = scaler
-                
-                ensemble_models = []
-                ensemble_scores = []
-                
-                # Train ensemble
-                for j in range(self.n_ensemble):
-                    print(f"  Training model {j+1}/{self.n_ensemble}...", end='\r')
-                    model = RandomForestRegressor(
-                        n_estimators=500,        # v53 configuration
-                        max_depth=15,
-                        min_samples_split=5,
-                        min_samples_leaf=2,
-                        max_features='sqrt',
-                        random_state=42 + i * 10 + j,
-                        n_jobs=-1
-                    )
-                    
-                    model.fit(X_train_scaled, y_train_filtered)
-                    
-                    if val_mask.sum() > 0:
-                        X_val_filtered = X_val[val_mask]
-                        y_val_filtered = y_val_target[val_mask]
-                        X_val_scaled = scaler.transform(X_val_filtered)
-                        
-                        y_pred = model.predict(X_val_scaled)
-                        mae = mean_absolute_error(y_val_filtered, y_pred)
-                        ensemble_scores.append(mae)
-                    
-                    ensemble_models.append(model)
-                
-                self.models[target] = ensemble_models
-                
-                # Evaluate ensemble
-                if val_mask.sum() > 0:
-                    print(f"  {'Training model completed!':<60}")
-                    ensemble_preds = np.array([m.predict(X_val_scaled) for m in ensemble_models])
-                    ensemble_pred_mean = ensemble_preds.mean(axis=0)
-                    
-                    results[target] = {
-                        'rmse': np.sqrt(mean_squared_error(y_val_filtered, ensemble_pred_mean)),
-                        'mae': mean_absolute_error(y_val_filtered, ensemble_pred_mean),
-                        'r2': r2_score(y_val_filtered, ensemble_pred_mean),
-                        'individual_maes': ensemble_scores,
-                        'ensemble_improvement': np.mean(ensemble_scores) - mean_absolute_error(y_val_filtered, ensemble_pred_mean),
-                        'n_train': len(y_train_filtered),
-                        'n_val': len(y_val_filtered)
-                    }
-                    
-                    print(f"  📊 Results:")
-                    print(f"     Training samples: {results[target]['n_train']}")
-                    print(f"     Validation samples: {results[target]['n_val']}")
-                    print(f"     Individual MAEs: {np.mean(ensemble_scores):.4f} ± {np.std(ensemble_scores):.4f}")
-                    print(f"     Ensemble MAE: {results[target]['mae']:.4f} (↓ {results[target]['ensemble_improvement']:.4f})")
-                    print(f"     Ensemble RMSE: {results[target]['rmse']:.4f}")
-                    print(f"     Ensemble R²: {results[target]['r2']:.4f}")
-                else:
-                    print(f"  ✅ Trained {self.n_ensemble} models on {len(y_train_filtered)} samples (no validation)")
+                print(f"\n📂 Loading {target}...", end=" ")
+                predictor = TabularPredictor.load(target_path)
+                self.predictors[target] = predictor
+                print(f"✅")
+                print(f"   Features: {len(predictor.features)}")
                 
             except Exception as e:
-                print(f"  ❌ Training failed for {target}: {e}")
-                continue
+                print(f"❌ Failed: {e}")
+                all_loaded = False
         
-        return results
+        if all_loaded:
+            print("\n" + "="*70)
+            print("✅ ALL AUTOGLUON MODELS LOADED!")
+            print("="*70)
+        
+        return all_loaded
     
     def predict(self, X_test, target_names):
-        """Predict on test data using ensemble averaging"""
+        """Generate predictions for all targets"""
         predictions = np.zeros((len(X_test), len(target_names)))
         
         for i, target in enumerate(target_names):
             try:
-                if target in self.models and target in self.scalers:
-                    scaler = self.scalers[target]
-                    ensemble_models = self.models[target]
+                if target in self.predictors:
+                    predictor = self.predictors[target]
                     
-                    X_test_clean = np.nan_to_num(X_test, nan=0.0, posinf=1e6, neginf=-1e6)
-                    X_test_scaled = scaler.transform(X_test_clean)
+                    # Handle NaN/inf
+                    X_clean = np.nan_to_num(X_test, nan=0.0, posinf=1e6, neginf=-1e6)
                     
-                    ensemble_preds = np.array([model.predict(X_test_scaled) for model in ensemble_models])
-                    pred = ensemble_preds.mean(axis=0)
-                    predictions[:, i] = pred
+                    # Convert to DataFrame
+                    X_df = pd.DataFrame(X_clean, columns=predictor.features)
+                    
+                    # Predict
+                    preds = predictor.predict(X_df)
+                    if isinstance(preds, (pd.Series, pd.DataFrame)):
+                        preds = preds.values.flatten()
+                    
+                    predictions[:, i] = preds
+                    print(f"✅ Predicted {target}: range [{preds.min():.4f}, {preds.max():.4f}]")
                 else:
+                    print(f"⚠️  No model for {target}, using zeros")
                     predictions[:, i] = 0.0
                     
             except Exception as e:
-                print(f"Prediction failed for {target}: {e}, using zeros")
+                print(f"❌ Prediction failed for {target}: {e}")
                 predictions[:, i] = 0.0
         
         return predictions
-    
-    def save(self, path):
-        """Save model to pickle file"""
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, 'wb') as f:
-            pickle.dump({
-                'models': self.models,
-                'scalers': self.scalers,
-                'n_ensemble': self.n_ensemble,
-                'feature_names': self.feature_names
-            }, f)
-        print(f"\n✅ Model saved to {path}")
-    
-    def load(self, path):
-        """Load model from pickle file"""
-        with open(path, 'rb') as f:
-            data = pickle.load(f)
-            self.models = data['models']
-            self.scalers = data['scalers']
-            self.n_ensemble = data.get('n_ensemble', 5)
-            self.feature_names = data.get('feature_names')
-        print(f"✅ Model loaded from {path}")
 
 
 def create_chemistry_features(df):
@@ -442,75 +369,54 @@ def load_and_augment_data():
 
 
 def main():
-    """Main training function"""
+    """Main function - use pre-trained AutoGluon models"""
     print("\n" + "="*80)
-    print("🎯 Training v85 Best Random Forest Model")
-    print("   🥇 TIED WITH 1ST PLACE!")
-    print("   Private Score: 0.07533 | Public Score: 0.08139")
+    print("🤖 AUTOGLUON PRODUCTION INFERENCE")
+    print("="*80)
+    print("Using pre-trained AutoGluon models from train_autogluon_production.py")
+    print("Models: WeightedEnsemble_L2 (stacked ensemble of 8 base models)")
+    print("Training: 60K+ samples, 34 features, medium_quality preset")
     print("="*80)
     
-    # Load and augment data
-    train_df, target_cols = load_and_augment_data()
+    project_root = os.path.dirname(os.path.dirname(__file__))
     
-    # Create chemistry features
+    # Load pre-trained AutoGluon models
     print("\n" + "="*80)
-    print("FEATURE ENGINEERING")
+    print("STEP 1: LOAD PRE-TRAINED AUTOGLUON MODELS")
     print("="*80)
+    
+    model = AutoGluonModel(model_dir=os.path.join(project_root, "models/autogluon_production"))
+    if not model.load():
+        print("❌ Failed to load AutoGluon models")
+        return
+    
+    target_cols = ['Tg', 'FFV', 'Tc', 'Density', 'Rg']
+    
+    # Load and augment data (for validation on training features)
+    print("\n" + "="*80)
+    print("STEP 2: LOAD AND AUGMENT DATA")
+    print("="*80)
+    
+    train_df, _ = load_and_augment_data()
+    
+    # Create features
+    print("\n" + "="*80)
+    print("STEP 3: CREATE FEATURES")
+    print("="*80)
+    
     train_features = create_chemistry_features(train_df)
     
-    # Prepare data
     print("\n" + "="*80)
-    print("PREPARING DATA")
+    print("✅ AUTOGLUON PRODUCTION SETUP COMPLETE!")
     print("="*80)
-    
-    y = train_df[target_cols].values
-    X = train_features.values
-    
-    # Remove samples with NaN/inf in features
-    feature_mask = ~np.isnan(X).any(axis=1) & ~np.isinf(X).any(axis=1)
-    X = X[feature_mask]
-    y = y[feature_mask]
-    
-    print(f"Final training set: {len(X)} samples with {X.shape[1]} features")
-    
-    # Split data
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
-    print(f"Train: {X_train.shape}, Validation: {X_val.shape}")
-    
-    # Train model
-    print("\n" + "="*80)
-    print("TRAINING ENSEMBLE MODEL")
-    print("="*80)
-    
-    model = RobustRandomForestEnsemble(n_targets=len(target_cols), n_ensemble=5)
-    model.feature_names = list(train_features.columns)
-    results = model.train(X_train, y_train, X_val, y_val, target_cols)
-    
-    # Print summary
-    print("\n" + "="*80)
-    print("TRAINING SUMMARY")
-    print("="*80)
-    for target, metrics in results.items():
-        print(f"{target:10s} | MAE: {metrics['mae']:7.4f} | RMSE: {metrics['rmse']:7.4f} | R²: {metrics['r2']:6.4f}")
-    
-    # Save model
-    project_root = os.path.dirname(os.path.dirname(__file__))
-    model_path = os.path.join(project_root, 'models', 'random_forest_v53_best.pkl')
-    model.save(model_path)
-    
-    print("\n" + "="*80)
-    print("✅ TRAINING COMPLETE!")
-    print("="*80)
-    print(f"Model saved to: {model_path}")
-    print(f"\n🥇 This model achieved 1st place performance!")
-    print(f"  - Private Score: 0.07533 (TIED WITH 1ST PLACE!)")
-    print(f"  - Public Score: 0.08139")
-    print(f"\nKey improvements in v85:")
-    print(f"  ✅ SMILES canonicalization for consistent representation")
-    print(f"  ✅ 50K pseudo-labeled dataset (BERT + AutoGluon + Uni-Mol)")
-    print(f"  ✅ 21 chemistry-based features (10 simple + 11 polymer-specific)")
-    print(f"  ✅ Random Forest ensemble (5 models per property)")
-    print(f"  ✅ Tg transformation (9/5)x + 45 (2nd place discovery)")
+    print(f"\nFeatures: {train_features.shape[1]}")
+    print(f"Training samples: {len(train_df)}")
+    print(f"Targets: {', '.join(target_cols)}")
+    print(f"\n📊 AutoGluon will handle:")
+    print(f"   ✅ Automatic feature selection from 34 features")
+    print(f"   ✅ Hyperparameter tuning for each algorithm")
+    print(f"   ✅ Intelligent ensemble weighting (WeightedEnsemble_L2)")
+    print(f"   ✅ Robust predictions on 60K+ training samples")
     print("="*80)
 
 
