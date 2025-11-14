@@ -33,7 +33,7 @@ conda activate pseudolabel_env
 
 # Install dependencies
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-pip install transformers pandas scikit-learn numpy tqdm rdkit
+pip install transformers pandas scikit-learn numpy tqdm rdkit autogluon
 
 # Verify Apple Silicon support
 python -c "import torch; print(f'MPS available: {torch.backends.mps.is_available()}')"
@@ -42,6 +42,8 @@ python -c "import torch; print(f'MPS available: {torch.backends.mps.is_available
 **Why separate environment?**
 - Avoids conflicts with `torch_geometric` (requires specific PyTorch version)
 - Cleaner dependency management for BERT/Uni-Mol
+- Includes AutoGluon and RDKit for seamless pipeline execution
+- **NOTE:** This environment is used by BOTH `pseudolabel/` and `AutoGluon/` folders!
 - Works seamlessly on Apple Silicon (MPS acceleration)
 
 ### 2. Quick Generation (5 min total)
@@ -454,6 +456,32 @@ ensemble_vals = np.average(
 2. **Use in training:** See `src/train_v85_best.py`
 3. **Submit to Kaggle:** Use the ensemble labels for production model
 4. **(Optional) Add AutoGluon:** Extend ensemble to 3+ models
+
+---
+
+## Important: Using `pseudolabel_env` Across the Project
+
+**Both `pseudolabel/` and `AutoGluon/` folders use the same environment:**
+
+```bash
+# Always activate this environment before running scripts in either folder
+conda activate pseudolabel_env
+
+# Pseudo-label generation
+python pseudolabel/train_bert_heads.py
+python pseudolabel/generate_with_bert.py
+
+# AutoGluon training & inference
+python AutoGluon/train_autogluon_production.py
+python AutoGluon/train_v85_best.py
+```
+
+**Why both folders share `pseudolabel_env`:**
+- ✅ Both use PyTorch, transformers, and RDKit
+- ✅ Both use pandas and scikit-learn
+- ✅ AutoGluon is installed in `pseudolabel_env`
+- ✅ Simplifies dependency management across the pipeline
+- ✅ Avoids conflicts and ensures reproducibility
 
 ---
 

@@ -105,7 +105,7 @@ class AutoGluonModel:
         
         return all_loaded
     
-    def predict(self, X_test, target_names):
+    def predict(self, X_test, target_names, all_features_df=None):
         """Generate predictions for all targets"""
         predictions = np.zeros((len(X_test), len(target_names)))
         
@@ -114,21 +114,24 @@ class AutoGluonModel:
                 if target in self.predictors:
                     predictor = self.predictors[target]
                     
-                    # Handle NaN/inf
-                    X_clean = np.nan_to_num(X_test, nan=0.0, posinf=1e6, neginf=-1e6)
-                    
-                    # Get feature names (handle both method and property)
+                    # Get feature names the model expects
                     try:
-                        features = predictor.features() if callable(predictor.features) else predictor.features
+                        expected_features = predictor.features() if callable(predictor.features) else predictor.features
                     except:
-                        # Fallback: create generic feature names matching X_test dimensions
-                        features = [f'feat_{j}' for j in range(X_clean.shape[1])]
+                        expected_features = None
                     
-                    # Convert to DataFrame with correct feature names
-                    X_df = pd.DataFrame(X_clean, columns=features[:X_clean.shape[1]])
+                    # If we have a DataFrame with all features, select only the expected ones
+                    if all_features_df is not None and expected_features is not None:
+                        X_df = all_features_df[[f for f in expected_features if f in all_features_df.columns]].copy()
+                    else:
+                        # Fallback: Handle NaN/inf and convert to DataFrame
+                        X_clean = np.nan_to_num(X_test, nan=0.0, posinf=1e6, neginf=-1e6)
+                        if expected_features is None:
+                            expected_features = [f'feat_{j}' for j in range(X_clean.shape[1])]
+                        X_df = pd.DataFrame(X_clean, columns=expected_features[:X_clean.shape[1]])
                     
                     # Predict
-                    preds = predictor.predict(X_df, verbose=0)
+                    preds = predictor.predict(X_df)
                     if isinstance(preds, (pd.Series, pd.DataFrame)):
                         preds = preds.values.flatten()
                     
@@ -467,7 +470,8 @@ def main():
     print("STEP 4: GENERATE PREDICTIONS WITH AUTOGLUON MODELS")
     print("="*80)
     
-    train_predictions = model.predict(train_features.values, target_cols)
+    # Pass features DataFrame so AutoGluon can select only the ones it needs
+    train_predictions = model.predict(train_features.values, target_cols, all_features_df=train_features)
     
     # Save predictions
     print("\n" + "="*80)
