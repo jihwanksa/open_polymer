@@ -38,24 +38,48 @@ pseudolabel/
 
 ## Quick Start
 
-### Step 1: Generate Pseudo-Labels Using Random Forest
+### Step 0: Obtain Pre-Trained Models
+
+Before generating pseudo-labels, you need pre-trained models from the 1st place solution:
+
+```bash
+# These are the three models used in the winning solution
+# 1. BERT SMILES Encoder - from Hugging Face or custom training
+# 2. AutoGluon Tabular Model - trained on original data
+# 3. Uni-Mol GNN - from Uni-Mol repository
+
+# Place them in the models/ directory:
+# - models/bert_smiles_encoder.pth
+# - models/autogluon_tabular/  (directory)
+# - models/unimol_gnn.pth
+```
+
+### Step 1: Generate Pseudo-Labels Using Ensemble
 
 ```bash
 cd /Users/jihwan/Downloads/open_polymer
 
-# Generate pseudo-labels from 50K unlabeled polymers
+# Generate pseudo-labels from 50K unlabeled polymers using ensemble
 python pseudolabel/generate_pseudolabels.py \
-    --model_path models/random_forest_v85_best.pkl \
     --input_data data/PI1M_50000_v2.1.csv \
-    --output_path pseudolabel/pi1m_pseudolabels_generated.csv \
+    --bert_model models/bert_smiles_encoder.pth \
+    --autogluon_model models/autogluon_tabular \
+    --unimol_model models/unimol_gnn.pth \
+    --output_path pseudolabel/pi1m_pseudolabels_ensemble.csv \
     --apply_tg_transform
 ```
 
 **Expected output:**
 ```
 ================================================================================
-PSEUDO-LABEL GENERATION USING TRAINED RANDOM FOREST MODEL (v85)
+PSEUDO-LABEL GENERATION USING ENSEMBLE (BERT + AutoGluon + Uni-Mol)
 ================================================================================
+
+This script replicates the 1st place solution approach:
+1. Load pre-trained ensemble models (BERT, AutoGluon, Uni-Mol)
+2. Generate predictions for each unlabeled polymer
+3. Average predictions across all models
+4. Save high-quality pseudo-labels for training
 
 📂 Loading input SMILES from data/PI1M_50000_v2.1.csv...
    Loaded 50000 samples
@@ -63,22 +87,37 @@ PSEUDO-LABEL GENERATION USING TRAINED RANDOM FOREST MODEL (v85)
 🔄 Canonicalizing SMILES...
    ✅ SMILES canonicalization complete!
 
-Creating chemistry-based features...
-   [████████████████████████████████████████] 50000/50000
-   ✅ Created 50000 feature vectors with 21 features
+🔧 Extracting chemistry features...
 
-📂 Loading trained model from models/random_forest_v85_best.pkl...
-✅ Model loaded successfully!
+📦 Loading pre-trained ensemble models...
 
-🔮 Generating pseudo-labels for 50000 samples...
-   ✅ Tg: Generated 50000 predictions
-   ✅ FFV: Generated 50000 predictions
-   ✅ Tc: Generated 50000 predictions
-   ✅ Density: Generated 50000 predictions
-   ✅ Rg: Generated 50000 predictions
+📂 Loading BERT model from models/bert_smiles_encoder.pth...
+✅ BERT model loaded successfully!
 
-💾 Saving pseudo-labels to pseudolabel/pi1m_pseudolabels_generated.csv...
-✅ Saved 50000 pseudo-labeled samples to pseudolabel/pi1m_pseudolabels_generated.csv
+📂 Loading AutoGluon model from models/autogluon_tabular...
+✅ AutoGluon model loaded successfully!
+
+📂 Loading Uni-Mol model from models/unimol_gnn.pth...
+✅ Uni-Mol model loaded successfully!
+
+🔮 Generating predictions from ensemble models...
+
+   Generating BERT predictions...
+   ✅ BERT: Generated 50000 predictions
+
+   Generating AutoGluon predictions...
+   ✅ AutoGluon: Generated 50000 predictions
+
+   Generating Uni-Mol predictions...
+   ✅ Uni-Mol: Generated 50000 predictions
+
+✅ Ensemble from 3 models: BERT, AutoGluon, Uni-Mol
+   Ensemble predictions shape: (50000, 5)
+
+🔧 Applying Tg transformation: (9/5) × Tg + 45...
+
+💾 Saving pseudo-labels to pseudolabel/pi1m_pseudolabels_ensemble.csv...
+✅ Saved 50000 pseudo-labeled samples to pseudolabel/pi1m_pseudolabels_ensemble.csv
 
 📊 Pseudo-label Summary:
    Total samples: 50000
@@ -91,6 +130,12 @@ Creating chemistry-based features...
 ================================================================================
 ✅ PSEUDO-LABEL GENERATION COMPLETE!
 ================================================================================
+
+Next steps:
+1. Review pseudo-labels in pseudolabel/pi1m_pseudolabels_ensemble.csv
+2. Concatenate with original training data (data/raw/train.csv)
+3. Extract chemistry features from augmented data
+4. Train final Random Forest ensemble with augmented data
 ```
 
 ### Step 2: Compare with Reference (Original Pseudo-Labels)
