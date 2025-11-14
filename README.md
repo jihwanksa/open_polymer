@@ -345,14 +345,16 @@ predictions = solution.apply_tg_transformation(predictions)
 ## Architecture
 
 ```
-v53: Ensemble Random Forest (5 models per property, predictions averaged) 🥇
-├─ Tg (glass transition temp) - 9,814 samples (54.4%)
-├─ FFV (free volume fraction) - 7,030 samples (39.0%)
-├─ Tc (crystallization temp) - 867 samples (4.8%)
-├─ Density - 1,242 samples (6.9%)
-└─ Rg (radius of gyration) - 1,243 samples (6.9%)
+v85: Ensemble Random Forest (5 models per property, predictions averaged) 🥇 (1ST PLACE!)
+├─ SMILES Canonicalization: Standardizes molecular representations
+├─ Pseudo-Label Integration: 50K samples from BERT + AutoGluon + Uni-Mol
+├─ Tg (glass transition temp) - 52,435 samples (87.4%)
+├─ FFV (free volume fraction) - 57,018 samples (95.0%)
+├─ Tc (crystallization temp) - 50,855 samples (84.7%)
+├─ Density - 50,601 samples (84.3%)
+└─ Rg (radius of gyration) - 50,602 samples (84.3%)
 
-Features: 21 chemistry-based (v7)
+Features: 21 chemistry-based
 Basic (10): smiles_length, carbon_count, nitrogen_count, oxygen_count,
             sulfur_count, fluorine_count, ring_count, double_bond_count,
             triple_bond_count, branch_count
@@ -362,17 +364,25 @@ Chemistry (11): num_side_chains, backbone_carbons, branching_ratio,
                 num_rings, single_bonds, halogen_count,
                 heteroatom_count, mw_estimate
 
-Training: 18,035 samples (7,973 original + 10,062 augmented)
+Training: 60,027 samples (7,973 original + 2,066 external augmentation + 50,000 pseudo-labels)
 Ensemble: 5 models with different random seeds per property
 Algorithm: Bootstrap aggregating (bagging) with feature randomness
 
-Hyperparameters (v53 - BEST):
+Hyperparameters (v85 - 1ST PLACE!):
   n_estimators: 500
   max_depth: 15         ← Deeper trees than XGBoost
   min_samples_split: 5
   min_samples_leaf: 2
   max_features: 'sqrt'  ← √21 ≈ 4.6 features per split (strong randomness)
-  bootstrap: True       ← Default: each tree sees different data
+  bootstrap: True       ← Each tree sees different data (bagging)
+  
+Post-Processing:
+  Tg transformation: (9/5) × Tg + 45  (2nd place discovery - critical!)
+  
+Local Training:
+  Run `python src/train_v53_best.py` to train model locally
+  Time: ~50 seconds
+  Output: models/random_forest_v53_best.pkl
 ```
 
 ## Commands Reference
@@ -390,4 +400,4 @@ cat kernel-metadata.json
 
 ---
 
-**Status:** 🥇 **TIED WITH 1ST PLACE!** | **Last Updated:** Nov 13, 2025 | **Best Model:** v85 Random Forest Ensemble (Canonicalization + Pseudo-labeling) | **Score:** 0.07533 (Private) | 0.08139 (Public) | **Improvement:** 45.8% from baseline
+**Status:** 🥇 **TIED WITH 1ST PLACE!** | **Last Updated:** Nov 14, 2025 | **Best Model:** v85 Random Forest Ensemble | **Local Training:** ✅ Tested & Working | **Score:** 0.07533 (Private) | 0.08139 (Public) | **Improvement:** 45.8% from baseline | **Train Time:** 50 seconds

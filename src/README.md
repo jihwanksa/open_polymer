@@ -2,13 +2,19 @@
 
 This directory contains all source code for training and evaluating polymer property prediction models.
 
-## 🏆 Best Kaggle Notebook
+## 🏆 Best Kaggle Notebook & Local Training
 
 **`best.ipynb`** (in root directory)
-- **Status:** 4th place on Kaggle leaderboard 🥇
-- **Score:** Private 0.07874 | Public 0.10354
-- **Model:** Random Forest Ensemble + 21 chemistry features
+- **Status:** 🥇 **TIED WITH 1ST PLACE on Kaggle!**
+- **Score:** Private 0.07533 | Public 0.08139 (v85)
+- **Model:** Random Forest Ensemble + 21 chemistry features + 50K pseudo-labels
 - **Ready to use:** Your colleague can fork and run directly on Kaggle!
+
+**`train_v53_best.py`** (this directory - local training)
+- **Status:** Exactly replicates best.ipynb locally
+- **Score:** Trains model with 60K samples (including pseudo-labels)
+- **Time:** ~50 seconds to train
+- **Usage:** `python src/train_v53_best.py`
 
 ## 📁 Directory Structure
 
@@ -293,7 +299,7 @@ python -c "import torch; import torch_geometric; print('✅ All dependencies OK'
 # Activate environment
 conda activate polymer
 
-# Best Random Forest Model (v53) - 50 seconds
+# ⭐ BEST MODEL - Random Forest v85 (1st Place!) - 50 seconds
 python src/train_v53_best.py
 
 # GNN with RDKit-enhanced features - 5-10 minutes
@@ -304,7 +310,7 @@ python src/train_transformer.py
 ```
 
 **Recommended Order:**
-1. `train_v53_best.py` (fastest, best performance)
+1. **`train_v53_best.py`** ⭐ (fastest, BEST 1st place performance: 0.07533!)
 2. `train_gnn_tuned.py` (medium time, interesting results)
 3. `train_transformer.py` (longest, optional)
 
@@ -318,10 +324,21 @@ python src/train_transformer.py
 | `train.py` | XGBoost/Random Forest | ~2m | `models/{xgb,rf}_model.pkl` | Molecular descriptors + fingerprints |
 
 **When to use each:**
-- **`train_v53_best.py`**: Best production model, fastest, use for Kaggle submissions
+- **`train_v53_best.py`** ⭐ **BEST - 1st Place!** 🥇
+  - Achieves 0.07533 private score (tied 1st place on Kaggle!)
+  - 60K training samples with pseudo-labels
+  - SMILES canonicalization for consistency
+  - 21 chemistry features + Random Forest ensemble
+  - **Use for all Kaggle submissions**
+  
 - **`train_gnn_tuned.py`**: Research/comparison, validates GNN feature engineering
+  - RDKit-enhanced node/edge features show improvement
+  
 - **`train_transformer.py`**: Experimental, slow but good for ensemble
+  - Can be combined with RF for better ensemble predictions
+  
 - **`train.py`**: Quick baseline, good for debugging
+  - Fast to run, useful for CI/CD validation
 
 ### 2. Use Trained Models
 

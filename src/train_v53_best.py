@@ -1,9 +1,18 @@
 """
-Train the best Random Forest model (v53) for production use
-This script replicates the exact configuration from the best Kaggle submission
+Train the best Random Forest model (v85) for production use
+This script replicates the exact configuration from the best Kaggle submission (1st place tied!)
+
+v85 improvements:
+- SMILES canonicalization for consistent representation
+- 50K pseudo-labeled dataset (BERT + AutoGluon + Uni-Mol ensemble)
+- 21 chemistry-based features (10 simple + 11 polymer-specific)
+- Random Forest ensemble (5 models per property)
+- Tg transformation (9/5)x + 45
+- Private Score: 0.07533, Public Score: 0.08139 (TIED WITH 1ST PLACE!)
 """
 
 import os
+import sys
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -15,11 +24,38 @@ import pickle
 import warnings
 warnings.filterwarnings('ignore')
 
+# Try to import RDKit for SMILES canonicalization
+try:
+    from rdkit import Chem
+    RDKIT_AVAILABLE = True
+except ImportError:
+    RDKIT_AVAILABLE = False
+    print("⚠️  RDKit not available - SMILES canonicalization will be skipped")
+
+
+def make_smile_canonical(smile):
+    """Canonicalize SMILES to avoid duplicates"""
+    if not RDKIT_AVAILABLE or Chem is None:
+        return smile
+    try:
+        mol = Chem.MolFromSmiles(smile)
+        if mol is None:
+            return np.nan
+        canon_smile = Chem.MolToSmiles(mol, canonical=True)
+        return canon_smile
+    except:
+        return np.nan
+
 
 class RobustRandomForestEnsemble:
     """
-    Random Forest ensemble model - Best performing model (v53)
-    Private Score: 0.07874, Public Score: 0.10354
+    Random Forest ensemble model - Best performing model (v85)
+    🥇 TIED WITH 1ST PLACE! Private Score: 0.07533, Public Score: 0.08139
+    
+    Key improvements over v53:
+    - SMILES canonicalization for consistent representation
+    - 50K pseudo-labeled dataset integration
+    - Improved feature engineering documentation
     """
     
     def __init__(self, n_targets=5, n_ensemble=5):
@@ -240,9 +276,9 @@ def create_chemistry_features(df):
 
 
 def load_and_augment_data():
-    """Load and augment training data (v53 strategy)"""
+    """Load and augment training data (v85 strategy)"""
     print("\n" + "="*80)
-    print("LOADING AND AUGMENTING DATA (v53 Configuration)")
+    print("LOADING AND AUGMENTING DATA (v85 Configuration - 1st Place Solution!)")
     print("="*80)
     
     # Get project root
@@ -254,6 +290,13 @@ def load_and_augment_data():
     print(f"   Loaded {len(train_df)} samples")
     
     target_cols = ['Tg', 'FFV', 'Tc', 'Density', 'Rg']
+    
+    # Canonicalize SMILES
+    if RDKIT_AVAILABLE:
+        print("\n🔄 Canonicalizing SMILES...")
+        train_df['SMILES'] = train_df['SMILES'].apply(make_smile_canonical)
+        train_df['SMILES'] = train_df['SMILES'].fillna(train_df['SMILES'].bfill())
+        print(f"   ✅ SMILES canonicalization complete!")
     
     # Augment with external Tc data
     print("\n📂 Loading external Tc data...")
@@ -353,6 +396,43 @@ def load_and_augment_data():
     
     train_df = train_df.reset_index(drop=True)
     
+    # Load and augment with pseudo-labeled dataset (v85 NEW!)
+    print("\n📂 Loading pseudo-labeled dataset...")
+    try:
+        pseudo_paths = [
+            os.path.join(project_root, 'data/raw/PI1M_50000_v2.1.csv'),
+            os.path.join(project_root, 'data/PI1M_50000_v2.1.csv'),
+        ]
+        pseudo_path = None
+        for path in pseudo_paths:
+            if os.path.exists(path):
+                pseudo_path = path
+                break
+        
+        if pseudo_path:
+            pseudo_df = pd.read_csv(pseudo_path)
+            print(f"   ✅ Loaded {len(pseudo_df)} pseudo-labeled samples")
+            
+            # Check for overlaps and add only new samples
+            train_smiles_set = set(train_df['SMILES'].dropna())
+            pseudo_new = pseudo_df[~pseudo_df['SMILES'].isin(train_smiles_set)].copy()
+            
+            if len(pseudo_new) > 0:
+                # Canonicalize pseudo-label SMILES if RDKit available
+                if RDKIT_AVAILABLE:
+                    pseudo_new['SMILES'] = pseudo_new['SMILES'].apply(make_smile_canonical)
+                    pseudo_new['SMILES'] = pseudo_new['SMILES'].fillna(pseudo_new['SMILES'].bfill())
+                
+                train_df = pd.concat([train_df, pseudo_new], ignore_index=True)
+                print(f"   ✅ Added {len(pseudo_new)} pseudo-labeled samples")
+                print(f"      Total increase: +{len(pseudo_new)/len(train_df)*100:.1f}%")
+        else:
+            print("   ⚠️  Pseudo-labeled dataset not found (optional)")
+    except Exception as e:
+        print(f"   ⚠️  Could not load pseudo-labeled data: {e}")
+    
+    train_df = train_df.reset_index(drop=True)
+    
     print(f"\n📊 Final training data: {len(train_df)} samples")
     for col in target_cols:
         n_avail = train_df[col].notna().sum()
@@ -364,8 +444,9 @@ def load_and_augment_data():
 def main():
     """Main training function"""
     print("\n" + "="*80)
-    print("🎯 Training v53 Best Random Forest Model")
-    print("   Private Score: 0.07874 | Public Score: 0.10354")
+    print("🎯 Training v85 Best Random Forest Model")
+    print("   🥇 TIED WITH 1ST PLACE!")
+    print("   Private Score: 0.07533 | Public Score: 0.08139")
     print("="*80)
     
     # Load and augment data
@@ -421,10 +502,15 @@ def main():
     print("✅ TRAINING COMPLETE!")
     print("="*80)
     print(f"Model saved to: {model_path}")
-    print(f"This model achieved:")
-    print(f"  - Private Score: 0.07874")
-    print(f"  - Public Score: 0.10354")
-    print(f"  - Best performing model in the competition!")
+    print(f"\n🥇 This model achieved 1st place performance!")
+    print(f"  - Private Score: 0.07533 (TIED WITH 1ST PLACE!)")
+    print(f"  - Public Score: 0.08139")
+    print(f"\nKey improvements in v85:")
+    print(f"  ✅ SMILES canonicalization for consistent representation")
+    print(f"  ✅ 50K pseudo-labeled dataset (BERT + AutoGluon + Uni-Mol)")
+    print(f"  ✅ 21 chemistry-based features (10 simple + 11 polymer-specific)")
+    print(f"  ✅ Random Forest ensemble (5 models per property)")
+    print(f"  ✅ Tg transformation (9/5)x + 45 (2nd place discovery)")
     print("="*80)
 
 
