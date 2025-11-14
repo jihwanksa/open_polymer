@@ -41,6 +41,36 @@ python kaggle/kaggle_automate.py "Your message"
 | v6 | + Ensemble (5 models per property) | 0.08266 | ↓ 0.4% | 10th |
 | v7 | + 21 chemistry features (14th place insights) | 0.08008 | ↓ 3.1% ✅ | 6th 🏆 |
 
+**Total improvement: 0.139 → 0.08008 = 42.4% error reduction** 🎉
+
+### What's in v6 (Ensemble)
+- **Ensemble XGBoost**: 5 independent models per property with different random seeds
+- **Model averaging**: Predictions averaged across all 5 models for variance reduction
+- **Same 10 basic features**: smiles_length, carbon_count, nitrogen_count, etc.
+- **Benefit**: Reduces overfitting through model diversity (different random states)
+
+### What's in v7 (Ensemble + Chemistry Features)
+Built on v6, adds **11 chemistry-based features** inspired by 14th place solution:
+
+**Structural Features:**
+1. `num_side_chains` - Polymer branching from backbone
+2. `backbone_carbons` - Main chain carbon count
+3. `branching_ratio` - Side chains per backbone carbon
+
+**Chemical Properties:**
+4. `aromatic_count` - Aromatic ring content (affects rigidity, Tg)
+5. `h_bond_donors` - Hydrogen bonding donors (O, N)
+6. `h_bond_acceptors` - Hydrogen bonding acceptors
+7. `num_rings` - Total ring structures
+8. `single_bonds` - Chain flexibility indicator
+9. `halogen_count` - F, Cl, Br content
+10. `heteroatom_count` - N, O, S atoms
+11. `mw_estimate` - Molecular weight approximation
+
+**Total: 21 features** (10 basic + 11 chemistry)
+
+**Key Insight:** Chemistry features capture polymer-specific properties (branching, backbone structure, H-bonding) that correlate with Tg, density, and other target properties.
+
 ### Phase 2: Systematic Hyperparameter & Model Testing (v48-v54)
 
 | Version | Model | Hyperparameters | Private / Public | Change | Status |
@@ -108,33 +138,7 @@ python kaggle/kaggle_automate.py "Your message"
 **Total improvement: 0.139 → 0.07533 = 45.8% error reduction** 🎉
 **Final leaderboard position: TIED WITH 1ST PLACE 🥇**
 
-### What's in v6 (Ensemble)
-- **Ensemble XGBoost**: 5 independent models per property with different random seeds
-- **Model averaging**: Predictions averaged across all 5 models for variance reduction
-- **Same 10 basic features**: smiles_length, carbon_count, nitrogen_count, etc.
-- **Benefit**: Reduces overfitting through model diversity (different random states)
 
-### What's in v7 (Ensemble + Chemistry Features)
-Built on v6, adds **11 chemistry-based features** inspired by 14th place solution:
-
-**Structural Features:**
-1. `num_side_chains` - Polymer branching from backbone
-2. `backbone_carbons` - Main chain carbon count
-3. `branching_ratio` - Side chains per backbone carbon
-
-**Chemical Properties:**
-4. `aromatic_count` - Aromatic ring content (affects rigidity, Tg)
-5. `h_bond_donors` - Hydrogen bonding donors (O, N)
-6. `h_bond_acceptors` - Hydrogen bonding acceptors
-7. `num_rings` - Total ring structures
-8. `single_bonds` - Chain flexibility indicator
-9. `halogen_count` - F, Cl, Br content
-10. `heteroatom_count` - N, O, S atoms
-11. `mw_estimate` - Molecular weight approximation
-
-**Total: 21 features** (10 basic + 11 chemistry)
-
-**Key Insight:** Chemistry features capture polymer-specific properties (branching, backbone structure, H-bonding) that correlate with Tg, density, and other target properties.
 
 ## Setup
 
