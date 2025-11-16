@@ -63,11 +63,13 @@ except ImportError:
 
 
 def make_smile_canonical(smile):
-    """Canonicalize SMILES to avoid duplicates"""
+    """Canonicalize SMILES to avoid duplicates (cleans polymer markers first)"""
     if not RDKIT_AVAILABLE or Chem is None:
         return smile
     try:
-        mol = Chem.MolFromSmiles(smile)
+        # Clean polymer markers BEFORE canonicalization
+        cleaned_smile = str(smile).replace('*', '[H]')
+        mol = Chem.MolFromSmiles(cleaned_smile)
         if mol is None:
             return np.nan
         canon_smile = Chem.MolToSmiles(mol, canonical=True)
@@ -80,8 +82,10 @@ def extract_rdkit_descriptors(smiles_str):
     """Extract RDKit molecular descriptors for a single SMILES"""
     try:
         from rdkit.Chem import Descriptors, Crippen
-        # Replace polymer markers with H (no brackets)
-        cleaned = str(smiles_str).replace('*', 'H')
+        # Clean polymer markers (handle both * and [*])
+        cleaned = str(smiles_str).replace('[*]', '[H]').replace('*', '[H]')
+        # Avoid double brackets if already cleaned
+        cleaned = cleaned.replace('[[H]]', '[H]')
         mol = Chem.MolFromSmiles(cleaned)
         if mol is None:
             return {}
@@ -472,6 +476,15 @@ def main(args):
             )
             
             print(f"  ✅ Model trained and saved to {model_path}", flush=True)
+            
+            # Extract feature importance
+            try:
+                importance = predictor.feature_importance(train_for_fit)
+                feature_importance_all[target] = importance.to_dict()
+                print(f"  📊 Feature importance extracted ({len(importance)} features)", flush=True)
+            except Exception as e:
+                print(f"  ⚠️  Could not extract feature importance: {e}", flush=True)
+            
             sys.stdout.flush()
             
         except Exception as e:
