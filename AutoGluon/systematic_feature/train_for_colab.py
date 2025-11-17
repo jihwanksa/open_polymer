@@ -20,9 +20,6 @@ Usage in Colab:
 import os
 import sys
 
-# CRITICAL: Force flush output immediately (for Colab subprocess compatibility)
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 1)  # Line buffering
-
 # Detect if running in Colab
 try:
     from google.colab import drive
