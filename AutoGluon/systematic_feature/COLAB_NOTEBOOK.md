@@ -21,25 +21,23 @@ print("✅ Setup complete!")
 
 ## Cell 2: Train Single Configuration
 
-Replace `C` with `A`, `B`, `D`, `E`, `F`, `G`, or `H` to test different configurations.
+Replace `A` with `B`, `C`, `D`, `E`, `F`, `G`, or `H` to test different configurations.
 
 ```python
-import subprocess
+# Train configuration A (simple features only)
+%run /content/open_polymer/AutoGluon/systematic_feature/train_for_colab.py --config A --time_limit 300
+```
+
+**Or with more control:**
+
+```python
+import sys
 import os
 
 os.chdir('/content/open_polymer')
+sys.argv = ['train_for_colab.py', '--config', 'A', '--time_limit', '300']
 
-# Train configuration C (current baseline - 34 features)
-result = subprocess.run([
-    'python',
-    'AutoGluon/systematic_feature/train_for_colab.py',
-    '--config', 'C',
-    '--time_limit', '300'
-], capture_output=True, text=True)
-
-print(result.stdout)
-if result.stderr:
-    print("STDERR:", result.stderr)
+exec(open('AutoGluon/systematic_feature/train_for_colab.py').read())
 ```
 
 ---
@@ -49,22 +47,20 @@ if result.stderr:
 Run all 8 configurations. **Estimated time: 30-40 minutes on T4 GPU**
 
 ```python
-import subprocess
+# Train all 8 configurations
+%run /content/open_polymer/AutoGluon/systematic_feature/train_for_colab.py --all --time_limit 300
+```
+
+**Or with more control:**
+
+```python
+import sys
 import os
 
 os.chdir('/content/open_polymer')
+sys.argv = ['train_for_colab.py', '--all', '--time_limit', '300']
 
-# Train all configurations
-result = subprocess.run([
-    'python',
-    'AutoGluon/systematic_feature/train_for_colab.py',
-    '--all',
-    '--time_limit', '300'
-], capture_output=True, text=True)
-
-print(result.stdout)
-if result.stderr:
-    print("STDERR:", result.stderr)
+exec(open('AutoGluon/systematic_feature/train_for_colab.py').read())
 ```
 
 ---
