@@ -20,14 +20,17 @@ Usage in Colab:
 import os
 import sys
 
+# CRITICAL: Force flush output immediately (for Colab subprocess compatibility)
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 1)  # Line buffering
+
 # Detect if running in Colab
 try:
     from google.colab import drive
     IN_COLAB = True
-    print("✅ Running in Google Colab")
+    print("✅ Running in Google Colab", flush=True)
 except ImportError:
     IN_COLAB = False
-    print("Running locally")
+    print("Running locally", flush=True)
 
 # GPU settings for Colab
 if IN_COLAB:
@@ -302,14 +305,14 @@ def get_project_root():
 def load_and_augment_data(project_root):
     """Load training data and augment with external datasets (same as train_autogluon_production.py)"""
     
-    print("\n" + "="*70)
-    print("STEP 1: Loading and augmenting training data...")
-    print("="*70)
+    print("\n" + "="*70, flush=True)
+    print("STEP 1: Loading and augmenting training data...", flush=True)
+    print("="*70, flush=True)
     
     # Load original training data
     train_path = os.path.join(project_root, 'data/raw/train.csv')
     train_df = pd.read_csv(train_path)
-    print(f"✅ Loaded original data: {len(train_df)} samples\n")
+    print(f"✅ Loaded original data: {len(train_df)} samples\n", flush=True)
     
     target_cols = ['Tg', 'FFV', 'Tc', 'Density', 'Rg']
     
@@ -356,36 +359,36 @@ def train_config(config_key, time_limit=300):
     train_df, target_cols = load_and_augment_data(project_root)
     
     # Extract features
-    print("="*70)
-    print("STEP 2: Extracting features...")
-    print("="*70)
-    print(f"Configuration {config_key} feature breakdown:")
+    print("="*70, flush=True)
+    print("STEP 2: Extracting features...", flush=True)
+    print("="*70, flush=True)
+    print(f"Configuration {config_key} feature breakdown:", flush=True)
     if config['simple']:
-        print("  ✅ Simple features (10): SMILES length, element counts, rings, bonds")
+        print("  ✅ Simple features (10): SMILES length, element counts, rings, bonds", flush=True)
     if config['hand_crafted']:
-        print("  ✅ Hand-crafted features (11): Polymer-specific domain knowledge")
+        print("  ✅ Hand-crafted features (11): Polymer-specific domain knowledge", flush=True)
     if config['rdkit_descriptors']:
-        print(f"  ✅ RDKit descriptors ({len(config['rdkit_descriptors'])}): Chemistry-based molecular features")
-    print()
+        print(f"  ✅ RDKit descriptors ({len(config['rdkit_descriptors'])}): Chemistry-based molecular features", flush=True)
+    print(flush=True)
     
     features_df = extract_features_for_config(train_df, config_key)
-    print(f"✅ Extracted {len(features_df.columns)} total features\n")
+    print(f"✅ Extracted {len(features_df.columns)} total features\n", flush=True)
     
     # Create training data
     train_data = pd.concat([train_df[['SMILES'] + target_cols], features_df], axis=1)
     train_data = train_data.dropna(subset=['SMILES']).reset_index(drop=True)
     
-    print("="*70)
-    print("STEP 3: Preparing training data...")
-    print("="*70)
-    print(f"Training data shape: {train_data.shape[0]} samples × {train_data.shape[1]} columns\n")
+    print("="*70, flush=True)
+    print("STEP 3: Preparing training data...", flush=True)
+    print("="*70, flush=True)
+    print(f"Training data shape: {train_data.shape[0]} samples × {train_data.shape[1]} columns\n", flush=True)
     
-    print("Target property availability:")
+    print("Target property availability:", flush=True)
     for col in target_cols:
         n_avail = train_data[col].notna().sum()
         pct = 100 * n_avail / len(train_data)
-        print(f"  {col:10s}: {n_avail:6d} samples ({pct:5.1f}%)")
-    print()
+        print(f"  {col:10s}: {n_avail:6d} samples ({pct:5.1f}%)", flush=True)
+    print(flush=True)
     
     # Output directory
     output_dir = Path('/content/autogluon_results' if IN_COLAB else 'models/autogluon_results') / config_key
@@ -401,24 +404,24 @@ def train_config(config_key, time_limit=300):
     
     feature_names = features_df.columns.tolist()
     
-    print("="*70)
-    print("STEP 4: Training AutoGluon models...")
-    print("="*70 + "\n")
+    print("="*70, flush=True)
+    print("STEP 4: Training AutoGluon models...", flush=True)
+    print("="*70 + "\n", flush=True)
     
     for target in target_cols:
-        print(f"🔧 Training model for {target}...")
+        print(f"🔧 Training model for {target}...", flush=True)
         
         target_data = train_data[feature_names + [target]].dropna(subset=[target])
         
         if len(target_data) == 0:
-            print(f"   ⚠️  No training data available for {target}")
-            print(f"   Status: SKIPPED\n")
+            print(f"   ⚠️  No training data available for {target}", flush=True)
+            print(f"   Status: SKIPPED\n", flush=True)
             continue
         
-        print(f"   Training samples: {len(target_data)}")
-        print(f"   Input features: {len(feature_names)}")
-        print(f"   Time limit: {time_limit}s")
-        print(f"   AutoGluon preset: good_quality")
+        print(f"   Training samples: {len(target_data)}", flush=True)
+        print(f"   Input features: {len(feature_names)}", flush=True)
+        print(f"   Time limit: {time_limit}s", flush=True)
+        print(f"   AutoGluon preset: good_quality", flush=True)
         
         try:
             model_path = str(output_dir / target)
@@ -429,7 +432,7 @@ def train_config(config_key, time_limit=300):
                 problem_type='regression'
             )
             
-            print(f"   → Fitting model...")
+            print(f"   → Fitting model...", flush=True)
             predictor.fit(
                 target_data,
                 time_limit=time_limit,
@@ -450,13 +453,13 @@ def train_config(config_key, time_limit=300):
             }
             
             reduction = 100 * (1 - n_selected / len(feature_names))
-            print(f"   ✅ Model trained successfully!")
-            print(f"      Selected features: {n_selected}/{len(feature_names)} ({reduction:.1f}% reduction)")
-            print(f"      Model saved to: {model_path}\n")
+            print(f"   ✅ Model trained successfully!", flush=True)
+            print(f"      Selected features: {n_selected}/{len(feature_names)} ({reduction:.1f}% reduction)", flush=True)
+            print(f"      Model saved to: {model_path}\n", flush=True)
             
         except Exception as e:
-            print(f"   ❌ Training failed: {str(e)[:100]}")
-            print(f"   Status: ERROR\n")
+            print(f"   ❌ Training failed: {str(e)[:100]}", flush=True)
+            print(f"   Status: ERROR\n", flush=True)
     
     # Save results
     results_file = output_dir / 'config_results.json'
