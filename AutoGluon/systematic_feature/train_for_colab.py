@@ -302,16 +302,19 @@ def get_project_root():
 def load_and_augment_data(project_root):
     """Load training data and augment with external datasets (same as train_autogluon_production.py)"""
     
-    print("📂 Loading and augmenting training data...")
+    print("\n" + "="*70)
+    print("STEP 1: Loading and augmenting training data...")
+    print("="*70)
     
     # Load original training data
     train_path = os.path.join(project_root, 'data/raw/train.csv')
     train_df = pd.read_csv(train_path)
-    print(f"✅ Original data: {len(train_df)} samples")
+    print(f"✅ Loaded original data: {len(train_df)} samples\n")
     
     target_cols = ['Tg', 'FFV', 'Tc', 'Density', 'Rg']
     
     # Try to augment with external datasets (same paths as production script)
+    print("Checking for external datasets...")
     external_datasets = [
         ('Tc_SMILES.csv', 'Tc'),
         ('Tg_SMILES_class_pid_polyinfo_median.csv', 'Tg'),
@@ -319,17 +322,22 @@ def load_and_augment_data(project_root):
         ('LAMALAB_CURATED_Tg_structured_polymerclass.csv', None),  # Multi-target
     ]
     
+    total_augmented = 0
     for filename, target in external_datasets:
         try:
             filepath = os.path.join(project_root, f'data/{filename}')
             if os.path.exists(filepath):
                 ext_df = pd.read_csv(filepath)
                 print(f"   ✅ Found {filename}: {len(ext_df)} samples")
+                total_augmented += len(ext_df)
                 # Could add merging logic here if needed
+            else:
+                print(f"   ⚠️  {filename} not found")
         except Exception as e:
             print(f"   ⚠️  Could not load {filename}: {str(e)[:50]}")
     
-    print(f"📊 Total data: {len(train_df)} samples\n")
+    print(f"\n📊 Original data: {len(train_df)} samples")
+    print(f"📊 Available external data: {total_augmented} samples\n")
     return train_df, target_cols
 
 
@@ -348,19 +356,35 @@ def train_config(config_key, time_limit=300):
     train_df, target_cols = load_and_augment_data(project_root)
     
     # Extract features
-    print(f"🔧 Extracting features...")
+    print("="*70)
+    print("STEP 2: Extracting features...")
+    print("="*70)
+    print(f"Configuration {config_key} feature breakdown:")
+    if config['simple']:
+        print("  ✅ Simple features (10): SMILES length, element counts, rings, bonds")
+    if config['hand_crafted']:
+        print("  ✅ Hand-crafted features (11): Polymer-specific domain knowledge")
+    if config['rdkit_descriptors']:
+        print(f"  ✅ RDKit descriptors ({len(config['rdkit_descriptors'])}): Chemistry-based molecular features")
+    print()
+    
     features_df = extract_features_for_config(train_df, config_key)
-    print(f"✅ Extracted {len(features_df.columns)} features\n")
+    print(f"✅ Extracted {len(features_df.columns)} total features\n")
     
     # Create training data
     train_data = pd.concat([train_df[['SMILES'] + target_cols], features_df], axis=1)
     train_data = train_data.dropna(subset=['SMILES']).reset_index(drop=True)
     
-    print(f"📊 Training data: {train_data.shape}")
+    print("="*70)
+    print("STEP 3: Preparing training data...")
+    print("="*70)
+    print(f"Training data shape: {train_data.shape[0]} samples × {train_data.shape[1]} columns\n")
+    
+    print("Target property availability:")
     for col in target_cols:
         n_avail = train_data[col].notna().sum()
         pct = 100 * n_avail / len(train_data)
-        print(f"   {col}: {n_avail} ({pct:.1f}%)")
+        print(f"  {col:10s}: {n_avail:6d} samples ({pct:5.1f}%)")
     print()
     
     # Output directory
@@ -377,16 +401,24 @@ def train_config(config_key, time_limit=300):
     
     feature_names = features_df.columns.tolist()
     
+    print("="*70)
+    print("STEP 4: Training AutoGluon models...")
+    print("="*70 + "\n")
+    
     for target in target_cols:
-        print(f"🚀 Training AutoGluon for {target}...")
+        print(f"🔧 Training model for {target}...")
         
         target_data = train_data[feature_names + [target]].dropna(subset=[target])
         
         if len(target_data) == 0:
-            print(f"   ⚠️  No training data for {target}\n")
+            print(f"   ⚠️  No training data available for {target}")
+            print(f"   Status: SKIPPED\n")
             continue
         
-        print(f"   Samples: {len(target_data)}, Features: {len(feature_names)}")
+        print(f"   Training samples: {len(target_data)}")
+        print(f"   Input features: {len(feature_names)}")
+        print(f"   Time limit: {time_limit}s")
+        print(f"   AutoGluon preset: good_quality")
         
         try:
             model_path = str(output_dir / target)
@@ -397,6 +429,7 @@ def train_config(config_key, time_limit=300):
                 problem_type='regression'
             )
             
+            print(f"   → Fitting model...")
             predictor.fit(
                 target_data,
                 time_limit=time_limit,
@@ -416,17 +449,30 @@ def train_config(config_key, time_limit=300):
                 'model_path': model_path
             }
             
-            print(f"   ✅ Model trained (selected {n_selected}/{len(feature_names)} features)\n")
+            reduction = 100 * (1 - n_selected / len(feature_names))
+            print(f"   ✅ Model trained successfully!")
+            print(f"      Selected features: {n_selected}/{len(feature_names)} ({reduction:.1f}% reduction)")
+            print(f"      Model saved to: {model_path}\n")
             
         except Exception as e:
-            print(f"   ❌ Training failed: {str(e)[:100]}\n")
+            print(f"   ❌ Training failed: {str(e)[:100]}")
+            print(f"   Status: ERROR\n")
     
     # Save results
     results_file = output_dir / 'config_results.json'
     with open(results_file, 'w') as f:
         json.dump(results, f, indent=2)
     
-    print(f"✅ Results saved to {output_dir}\n")
+    print("="*70)
+    print("SUMMARY")
+    print("="*70)
+    print(f"Configuration: {config_key} - {config['description']}")
+    print(f"Input features: {results['input_features']}")
+    print(f"Models trained: {len(results['models'])}/{len(target_cols)}")
+    for target, model_info in results['models'].items():
+        print(f"  ✅ {target}: {model_info['selected_features']} features selected")
+    print(f"\nResults saved to: {output_dir}")
+    print("="*70 + "\n")
     return results
 
 
