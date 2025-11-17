@@ -410,6 +410,7 @@ def load_and_augment_data(project_root):
         pseudo_paths = [
             os.path.join(project_root, 'pseudolabel/pi1m_pseudolabels_ensemble_3models.csv'),
             os.path.join(project_root, 'pseudolabel/pi1m_pseudolabels_ensemble_2models.csv'),
+            os.path.join(project_root, 'data/PI1M_50000_v2.1.csv'),  # Main pseudo-label file
         ]
         pseudo_path = None
         for p in pseudo_paths:
