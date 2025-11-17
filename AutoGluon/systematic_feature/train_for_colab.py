@@ -300,44 +300,134 @@ def get_project_root():
 
 
 def load_and_augment_data(project_root):
-    """Load training data and augment with external datasets (same as train_autogluon_production.py)"""
+    """Load training data and augment with external datasets (FULL pipeline from train_autogluon_production.py)"""
     
     print("\n" + "="*70, flush=True)
     print("STEP 1: Loading and augmenting training data...", flush=True)
     print("="*70, flush=True)
     
+    target_cols = ['Tg', 'FFV', 'Tc', 'Density', 'Rg']
+    
     # Load original training data
     train_path = os.path.join(project_root, 'data/raw/train.csv')
     train_df = pd.read_csv(train_path)
-    print(f"✅ Loaded original data: {len(train_df)} samples\n", flush=True)
+    print(f"✅ Loaded original data: {len(train_df)} samples", flush=True)
     
-    target_cols = ['Tg', 'FFV', 'Tc', 'Density', 'Rg']
+    # Augment with Tc dataset
+    print("\n→ Augmenting with Tc dataset...", flush=True)
+    try:
+        tc_path = os.path.join(project_root, 'data/Tc_SMILES.csv')
+        if os.path.exists(tc_path):
+            tc_df = pd.read_csv(tc_path)
+            tc_new_rows = []
+            for _, row in tc_df.iterrows():
+                tc_new_rows.append({
+                    'SMILES': row['SMILES'],
+                    'Tg': np.nan, 'FFV': np.nan,
+                    'Tc': row.get('TC_mean', row.get('Tc', np.nan)),
+                    'Density': np.nan, 'Rg': np.nan
+                })
+            if tc_new_rows:
+                train_df = pd.concat([train_df, pd.DataFrame(tc_new_rows)], ignore_index=True)
+                print(f"   ✅ Added {len(tc_new_rows)} Tc samples")
+        else:
+            print(f"   ⚠️  Tc dataset not found")
+    except Exception as e:
+        print(f"   ⚠️  Tc augmentation failed: {str(e)[:50]}")
     
-    # Try to augment with external datasets (same paths as production script)
-    print("Checking for external datasets...")
-    external_datasets = [
-        ('Tc_SMILES.csv', 'Tc'),
-        ('Tg_SMILES_class_pid_polyinfo_median.csv', 'Tg'),
-        ('PI1070.csv', None),  # Multi-target
-        ('LAMALAB_CURATED_Tg_structured_polymerclass.csv', None),  # Multi-target
-    ]
+    # Augment with Tg dataset
+    print("→ Augmenting with Tg dataset...", flush=True)
+    try:
+        tg_path = os.path.join(project_root, 'data/Tg_SMILES_class_pid_polyinfo_median.csv')
+        if os.path.exists(tg_path):
+            tg_df = pd.read_csv(tg_path)
+            tg_new_rows = []
+            for _, row in tg_df.iterrows():
+                tg_new_rows.append({
+                    'SMILES': row['SMILES'],
+                    'Tg': row.get('Tg', np.nan),
+                    'FFV': np.nan, 'Tc': np.nan,
+                    'Density': np.nan, 'Rg': np.nan
+                })
+            if tg_new_rows:
+                train_df = pd.concat([train_df, pd.DataFrame(tg_new_rows)], ignore_index=True)
+                print(f"   ✅ Added {len(tg_new_rows)} Tg samples")
+        else:
+            print(f"   ⚠️  Tg dataset not found")
+    except Exception as e:
+        print(f"   ⚠️  Tg augmentation failed: {str(e)[:50]}")
     
-    total_augmented = 0
-    for filename, target in external_datasets:
-        try:
-            filepath = os.path.join(project_root, f'data/{filename}')
-            if os.path.exists(filepath):
-                ext_df = pd.read_csv(filepath)
-                print(f"   ✅ Found {filename}: {len(ext_df)} samples")
-                total_augmented += len(ext_df)
-                # Could add merging logic here if needed
-            else:
-                print(f"   ⚠️  {filename} not found")
-        except Exception as e:
-            print(f"   ⚠️  Could not load {filename}: {str(e)[:50]}")
+    # Augment with PI1070 (Density + Rg)
+    print("→ Augmenting with PI1070 dataset...", flush=True)
+    try:
+        pi_path = os.path.join(project_root, 'data/PI1070.csv')
+        if os.path.exists(pi_path):
+            pi_df = pd.read_csv(pi_path)
+            pi_count = 0
+            for _, row in pi_df.iterrows():
+                if pd.notna(row.get('density')) or pd.notna(row.get('Rg')):
+                    train_df = pd.concat([train_df, pd.DataFrame([{
+                        'SMILES': row['smiles'],
+                        'Tg': np.nan, 'FFV': np.nan, 'Tc': np.nan,
+                        'Density': row.get('density', np.nan),
+                        'Rg': row.get('Rg', np.nan)
+                    }])], ignore_index=True)
+                    pi_count += 1
+            if pi_count > 0:
+                print(f"   ✅ Added {pi_count} PI1070 samples")
+        else:
+            print(f"   ⚠️  PI1070 dataset not found")
+    except Exception as e:
+        print(f"   ⚠️  PI1070 augmentation failed: {str(e)[:50]}")
     
-    print(f"\n📊 Original data: {len(train_df)} samples")
-    print(f"📊 Available external data: {total_augmented} samples\n")
+    # Augment with LAMALAB Tg
+    print("→ Augmenting with LAMALAB Tg dataset...", flush=True)
+    try:
+        lama_path = os.path.join(project_root, 'data/LAMALAB_CURATED_Tg_structured_polymerclass.csv')
+        if os.path.exists(lama_path):
+            lama_df = pd.read_csv(lama_path)
+            lama_count = 0
+            for _, row in lama_df.iterrows():
+                tg_value = row.get('labels.Exp_Tg(K)', np.nan)
+                if pd.notna(tg_value):
+                    tg_celsius = tg_value - 273.15
+                    train_df = pd.concat([train_df, pd.DataFrame([{
+                        'SMILES': row['PSMILES'],
+                        'Tg': tg_celsius,
+                        'FFV': np.nan, 'Tc': np.nan, 'Density': np.nan, 'Rg': np.nan
+                    }])], ignore_index=True)
+                    lama_count += 1
+            if lama_count > 0:
+                print(f"   ✅ Added {lama_count} LAMALAB samples")
+        else:
+            print(f"   ⚠️  LAMALAB dataset not found")
+    except Exception as e:
+        print(f"   ⚠️  LAMALAB augmentation failed: {str(e)[:50]}")
+    
+    # Augment with pseudo-labels
+    print("→ Augmenting with pseudo-labeled dataset...", flush=True)
+    try:
+        pseudo_paths = [
+            os.path.join(project_root, 'pseudolabel/pi1m_pseudolabels_ensemble_3models.csv'),
+            os.path.join(project_root, 'pseudolabel/pi1m_pseudolabels_ensemble_2models.csv'),
+        ]
+        pseudo_path = None
+        for p in pseudo_paths:
+            if os.path.exists(p):
+                pseudo_path = p
+                break
+        
+        if pseudo_path:
+            pseudo_df = pd.read_csv(pseudo_path)
+            train_df = pd.concat([train_df, pseudo_df], ignore_index=True)
+            print(f"   ✅ Added {len(pseudo_df)} pseudo-labeled samples")
+        else:
+            print(f"   ⚠️  Pseudo-labeled dataset not found")
+    except Exception as e:
+        print(f"   ⚠️  Pseudo-label augmentation failed: {str(e)[:50]}")
+    
+    train_df = train_df.reset_index(drop=True)
+    print(f"\n📊 Total training data after augmentation: {len(train_df)} samples\n", flush=True)
     return train_df, target_cols
 
 
