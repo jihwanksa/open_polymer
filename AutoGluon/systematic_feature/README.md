@@ -328,4 +328,99 @@ For each configuration, track:
 - **Analysis & Report:** 15 min
 - **Total:** ~1.5 hours
 
+---
+
+## 9. Inference with Trained Models
+
+After training with `train_for_colab_serial.py`, use the trained models for inference with `inference.py`.
+
+### 9.1 Usage in Colab
+
+**Step 1: Train models for a configuration (e.g., config G)**
+```python
+%run /content/open_polymer/AutoGluon/systematic_feature/train_for_colab_serial.py --config G --time_limit 300
+```
+
+Models will be saved to: `/content/autogluon_results/G/{Tg,FFV,Tc,Density,Rg}`
+
+**Step 2: Run inference on the same configuration**
+```python
+%run /content/open_polymer/AutoGluon/systematic_feature/inference.py --config G
+```
+
+Predictions will be saved to: `/content/inference_results_config_G.csv`
+
+### 9.2 Model Directory Structure
+
+Each trained configuration has the following structure:
+
+```
+/content/autogluon_results/
+├── A/  (Simple only)
+│   ├── Tg/
+│   ├── FFV/
+│   ├── Tc/
+│   ├── Density/
+│   └── Rg/
+├── B/  (Hand-crafted only)
+│   ├── Tg/
+│   ├── ...
+├── C/  (Current baseline)
+│   ├── Tg/
+│   ├── ...
+├── G/  (No simple features)
+│   ├── Tg/
+│   │   ├── AutoGluon_metadata.json
+│   │   ├── model.pkl
+│   │   ├── ...
+│   ├── FFV/
+│   ├── ...
+```
+
+Each target property folder contains:
+- **AutoGluon_metadata.json** - Training configuration and feature selection
+- **model.pkl** - The trained predictor object
+- **data** folder - Input features used during training
+- **config_results.json** - Summary of training (saved at parent level)
+
+### 9.3 Feature Extraction by Configuration
+
+The `inference.py` script automatically extracts the correct features based on `--config`:
+
+| Config | Simple | Hand-crafted | RDKit | Total |
+|--------|--------|--------------|-------|-------|
+| A      | ✅ 10  | ❌           | ❌    | 10    |
+| B      | ❌     | ✅ 11        | ❌    | 11    |
+| C      | ✅ 10  | ✅ 11        | ✅ 13 | 34    |
+| G      | ❌     | ✅ 11        | ✅ 13 | 24    |
+| H      | ✅ 10  | ❌           | ✅ 13 | 23    |
+
+### 9.4 Output
+
+The `inference.py` script produces:
+- **CSV predictions:** `inference_results_config_{CONFIG}.csv`
+- **Console output:** Detailed logging of feature extraction and model loading
+- **Statistics:** Min/max/mean/std for each property
+
+Example output:
+```
+📂 Project root: /content/open_polymer
+======================================================================
+LOADING AUTOGLUON MODELS (Configuration G)
+======================================================================
+Model directory: /content/autogluon_results/G
+
+📂 Loading Tg... ✅
+   Features: 11
+📂 Loading FFV... ✅
+   Features: 11
+...
+```
+
+### 9.5 Notes
+
+- **Inference uses ONLY the features the model was trained on** - AutoGluon's feature selection is honored
+- **Path detection is automatic** - Works with both `/content/open_polymer` and `/content/drive/MyDrive/open_polymer`
+- **Data augmentation is applied during inference** - Uses the same datasets as training (Tc, Tg, PI1070, LAMALAB, pseudo-labels)
+
 
