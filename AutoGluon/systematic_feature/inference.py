@@ -194,12 +194,100 @@ RDKIT_CURRENT_13 = [
     'RingCount', 'FractionCsp3', 'NumHeteroatoms', 'BertzCT'
 ]
 
+RDKIT_EXPANDED_35 = [
+    # Original 13
+    'MolWt', 'LogP', 'NumHDonors', 'NumHAcceptors', 'NumRotatableBonds',
+    'NumAromaticRings', 'TPSA', 'NumSaturatedRings', 'NumAliphaticRings',
+    'RingCount', 'FractionCsp3', 'NumHeteroatoms', 'BertzCT',
+    # Additional descriptors (22 more)
+    'ExactMolWt', 'HeavyAtomCount', 'NAtoms', 'NumAmideBonds',
+    'NumAromaticCarbocycles', 'NumAromaticHeterocycles', 'NumSaturatedCarbocycles',
+    'NumSaturatedHeterocycles', 'NumAliphaticCarbocycles', 'NumAliphaticHeterocycles',
+    'LabuteASA', 'PercentVSA_EState1', 'PercentVSA_EState2', 'PercentVSA_EState3',
+    'PEOE_VSA1', 'PEOE_VSA2', 'PEOE_VSA3', 'Ipc', 'Kappa1', 'Kappa2', 'Kappa3',
+    'Chi0', 'Chi1'
+]
+
+RDKIT_ALL_DESCRIPTORS = [
+    # Molecular weight & size
+    'MolWt', 'ExactMolWt', 'HeavyAtomCount', 'NAtoms',
+    # Lipophilicity
+    'LogP', 'TPSA', 'LabuteASA',
+    # H-bonding
+    'NumHDonors', 'NumHAcceptors', 'NumHeteroatoms',
+    # Aromaticity
+    'NumAromaticRings', 'NumAromaticCarbocycles', 'NumAromaticHeterocycles', 'FractionCsp3',
+    # Rings & cycles
+    'RingCount', 'NumSaturatedRings', 'NumAliphaticRings', 
+    'NumSaturatedCarbocycles', 'NumSaturatedHeterocycles',
+    'NumAliphaticCarbocycles', 'NumAliphaticHeterocycles',
+    # Bonds
+    'NumRotatableBonds', 'NumAmideBonds', 'NumSulfonamideBonds',
+    # Topological
+    'BertzCT', 'Ipc', 'Kappa1', 'Kappa2', 'Kappa3', 'Chi0', 'Chi1', 'Chi2', 'Chi3',
+    'LabuteELF10', 'PercentVSA_EState1', 'PercentVSA_EState2', 'PercentVSA_EState3',
+    'PercentVSA_EState4', 'PercentVSA_EState5', 'PercentVSA_EState6', 'PercentVSA_EState7',
+    'PercentVSA_EState8', 'PercentVSA_EState9', 'PercentVSA_EState10',
+    'PEOE_VSA1', 'PEOE_VSA2', 'PEOE_VSA3', 'PEOE_VSA4', 'PEOE_VSA5', 'PEOE_VSA6',
+    'PEOE_VSA7', 'PEOE_VSA8', 'PEOE_VSA9', 'PEOE_VSA10', 'PEOE_VSA11', 'PEOE_VSA12',
+    'PEOE_VSA13', 'PEOE_VSA14',
+    # Additional descriptors
+    'NumRotors', 'NumValenceElectrons', 'NumAliphaticCarbocycles',
+    'NumAliphaticHeterocycles', 'NumAliphaticRings', 'SASA', 'TPSA',
+]
+
+# Remove duplicates and limit to ~60 most useful descriptors for "all"
+RDKIT_ALL_DESCRIPTORS = list(set(RDKIT_ALL_DESCRIPTORS))[:60]
+
 CONFIGURATIONS = {
-    'A': {'name': 'simple_only', 'simple': True, 'hand_crafted': False, 'rdkit': []},
-    'B': {'name': 'hand_crafted_only', 'simple': False, 'hand_crafted': True, 'rdkit': []},
-    'C': {'name': 'current_baseline', 'simple': True, 'hand_crafted': True, 'rdkit': RDKIT_CURRENT_13},
-    'G': {'name': 'no_simple', 'simple': False, 'hand_crafted': True, 'rdkit': RDKIT_CURRENT_13},
-    'H': {'name': 'no_hand_crafted', 'simple': True, 'hand_crafted': False, 'rdkit': RDKIT_CURRENT_13},
+    'A': {
+        'name': 'A_simple_only',
+        'simple': True,
+        'hand_crafted': False,
+        'rdkit': []
+    },
+    'B': {
+        'name': 'B_hand_crafted_only',
+        'simple': False,
+        'hand_crafted': True,
+        'rdkit': []
+    },
+    'C': {
+        'name': 'C_current_baseline',
+        'simple': True,
+        'hand_crafted': True,
+        'rdkit': RDKIT_CURRENT_13
+    },
+    'D': {
+        'name': 'D_expanded_rdkit',
+        'simple': True,
+        'hand_crafted': True,
+        'rdkit': RDKIT_EXPANDED_35
+    },
+    'E': {
+        'name': 'E_all_rdkit',
+        'simple': True,
+        'hand_crafted': True,
+        'rdkit': RDKIT_ALL_DESCRIPTORS
+    },
+    'F': {
+        'name': 'F_rdkit_only_expanded',
+        'simple': False,
+        'hand_crafted': False,
+        'rdkit': RDKIT_EXPANDED_35
+    },
+    'G': {
+        'name': 'G_no_simple',
+        'simple': False,
+        'hand_crafted': True,
+        'rdkit': RDKIT_CURRENT_13
+    },
+    'H': {
+        'name': 'H_no_hand_crafted',
+        'simple': True,
+        'hand_crafted': False,
+        'rdkit': RDKIT_CURRENT_13
+    },
 }
 
 
