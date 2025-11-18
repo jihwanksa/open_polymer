@@ -427,8 +427,7 @@ def load_and_augment_data():
     print("="*80)
     
     # Get project root
-    project_root = os.path.dirname(os.path.dirname(__file__))
-    
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))    
     # Load main training data
     print("\n📂 Loading main training data...")
     train_df = pd.read_csv(os.path.join(project_root, 'data/raw/train.csv'))
@@ -607,7 +606,10 @@ def get_project_root():
                 return p
         raise FileNotFoundError("Project not found in common Colab paths")
     else:
-        return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        # Local: inference.py is in AutoGluon/systematic_feature/, go up 3 levels to project root
+        current_file = os.path.abspath(__file__)
+        # AutoGluon/systematic_feature/inference.py -> AutoGluon/systematic_feature -> AutoGluon -> project_root
+        return os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
 
 
 def main(config='C'):
