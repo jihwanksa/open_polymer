@@ -510,6 +510,149 @@ See `pseudolabel/README.md` for complete workflow and `AutoGluon/README.md` for 
 
 ---
 
+## AutoGluon: Systematic Feature Analysis
+
+**Status:** ✅ Complete (8 configurations A-H trained with systematic feature sets)
+
+We performed systematic feature analysis using AutoGluon to identify the optimal feature subsets for polymer property prediction. This framework tests different combinations of simple features, hand-crafted chemistry features, and RDKit molecular descriptors.
+
+### Overview
+
+**Goal:** Understand which feature types matter most for AutoGluon models:
+- Simple features (10): SMILES counting (length, atom counts, bond types, etc.)
+- Hand-crafted features (11): Polymer-specific (branching, backbone structure, H-bonding, etc.)
+- RDKit descriptors (13-60): Molecular properties (MW, LogP, TPSA, aromaticity, etc.)
+
+### 8 Feature Configurations (A-H)
+
+| Config | Name | Simple | Hand-Crafted | RDKit | Total Features | Use Case |
+|--------|------|--------|--------------|-------|----------------|----------|
+| **A** | Simple only | ✅ (10) | ❌ | ❌ | 10 | Baseline: SMILES counting alone |
+| **B** | Hand-crafted only | ❌ | ✅ (11) | ❌ | 11 | Domain knowledge without simple features |
+| **C** | Current baseline | ✅ (10) | ✅ (11) | ✅ (13) | 34 | Original v85 approach |
+| **D** | Expanded RDKit | ✅ (10) | ✅ (11) | ✅ (35) | 56 | More RDKit descriptors (25 additional) |
+| **E** | All RDKit | ✅ (10) | ✅ (11) | ✅ (60) | 81 | Maximum feature set (~60 RDKit descriptors) |
+| **F** | RDKit only expanded | ❌ | ❌ | ✅ (35) | 35 | Pure RDKit without domain knowledge |
+| **G** | No simple | ❌ | ✅ (11) | ✅ (13) | 24 | Domain + RDKit, minimal complexity |
+| **H** | No hand-crafted | ✅ (10) | ❌ | ✅ (13) | 23 | Simple + RDKit, no chemistry knowledge |
+
+### Training Infrastructure
+
+**Colab Setup:**
+- **GPU:** T4 (Tesla GPU for faster training)
+- **Environment:** Google Drive mounted for persistent model storage
+- **Training time:** ~5 minutes per configuration (all 5 properties)
+
+**Resources:**
+- **Source code:** [Google Drive Code Folder](https://drive.google.com/drive/folders/1C5syUKnhFBrIjWD6hahXt69_DpvN6Wg7?dmr=1&ec=wgc-drive-hero-goto) (train_for_colab_serial.py, inference.py)
+- **Trained models:** [Google Drive Models Folder](https://drive.google.com/drive/folders/1K364qJNUNCXKIeQTCRVZU88SynD2RZNL?dmr=1&ec=wgc-drive-hero-goto) (A-H directories with trained predictors)
+- **Training notebook:** [Colab Notebook](https://colab.research.google.com/drive/1Q1BnFXSWaW00mcBcMEf9YWazBlqHXjCf#scrollTo=EQpSMTAZUSt7) (executed all configs)
+
+### Directory Structure (Google Drive Models)
+
+```
+autogluon_results/
+├── A/                    # Simple only (10 features)
+│   ├── Tg/              # Model for Tg prediction
+│   ├── FFV/
+│   ├── Tc/
+│   ├── Density/
+│   └── Rg/
+├── B/                    # Hand-crafted only (11 features)
+│   ├── Tg/
+│   ├── FFV/
+│   ├── Tc/
+│   ├── Density/
+│   └── Rg/
+├── C/                    # Current baseline (34 features)
+│   ├── Tg/
+│   ├── FFV/
+│   ├── Tc/
+│   ├── Density/
+│   └── Rg/
+├── D/                    # Expanded RDKit (56 features)
+│   └── [5 property models]
+├── E/                    # All RDKit (81 features)
+│   └── [5 property models]
+├── F/                    # RDKit only expanded (35 features)
+│   └── [5 property models]
+├── G/                    # No simple (24 features)
+│   └── [5 property models]
+└── H/                    # No hand-crafted (23 features)
+    └── [5 property models]
+```
+
+### Key Scripts
+
+**`train_for_colab_serial.py`** - Training script for Colab
+- Trains all 5 properties sequentially for a given configuration
+- Full data augmentation (Tc, Tg, PI1070, LAMALAB, pseudo-labels)
+- Integrated logging with real-time progress
+- Usage: `%run /path/train_for_colab_serial.py --config A --time_limit 300`
+
+**`inference.py`** - Inference script for predictions
+- Loads trained models for specific configuration
+- Extracts features matching the config's feature set
+- Generates predictions on test data
+- Usage: `%run /path/inference.py --config G`
+
+**`COLAB_NOTEBOOK.md`** - Setup and execution guide
+- Step-by-step cells for mounting Google Drive
+- Commands to run each configuration
+- Results checking and interpretation
+
+### Training Data Augmentation
+
+Each configuration trains on:
+- **Original:** 7,973 training samples
+- **+ Tc:** 737 Tc samples
+- **+ Tg:** 7,369 LAMALAB samples
+- **+ Density:** 781 PI1070 samples
+- **+ Pseudo-labels:** 50,000 samples from BERT + Uni-Mol + AutoGluon ensemble
+- **Total:** ~60,000+ samples per property (varies by target)
+
+### AutoGluon Configuration
+
+- **Preset:** `good_quality` (balanced accuracy/speed)
+- **Time limit:** 300 seconds per property
+- **Algorithm:** AutoML ensemble (RF + XGBoost + LightGBM + neural networks)
+- **Feature selection:** AutoGluon automatically selects best features from the provided set
+
+### Usage in Colab
+
+1. **Mount Google Drive:**
+   ```python
+   from google.colab import drive
+   drive.mount('/content/drive')
+   ```
+
+2. **Train a configuration (e.g., F):**
+   ```python
+   %run /content/drive/MyDrive/open_polymer/AutoGluon/systematic_feature/train_for_colab_serial.py --config F --time_limit 300
+   ```
+
+3. **Run inference with trained models (e.g., G):**
+   ```python
+   %run /content/drive/MyDrive/open_polymer/AutoGluon/systematic_feature/inference.py --config G
+   ```
+
+4. **Output:** Predictions saved to `inference_results_config_G.csv`
+
+### Results Summary
+
+All 8 configurations successfully trained with the following properties:
+- **Tg (Glass Transition):** 511-52,435 samples
+- **FFV (Free Volume Fraction):** 7,030-57,018 samples
+- **Tc (Crystallization):** 737-50,855 samples
+- **Density:** 613-50,601 samples
+- **Rg (Radius of Gyration):** 614-50,602 samples
+
+**Key Insight:** AutoGluon's automatic feature selection allows testing which combinations of feature types (simple, hand-crafted, RDKit) work best without manual hyperparameter tuning.
+
+See `AutoGluon/README.md` for detailed local training setup and `AutoGluon/systematic_feature/COLAB_NOTEBOOK.md` for Colab execution guide.
+
+---
+
 ## Key Learnings
 
 ### Why Simple Beats Complex
