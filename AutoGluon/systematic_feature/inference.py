@@ -426,8 +426,24 @@ def load_and_augment_data():
     print("LOADING AND AUGMENTING DATA (v85 Configuration - 1st Place Solution!)")
     print("="*80)
     
-    # Get project root
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))    
+    # Get project root - handle both Colab and local paths
+    if IN_COLAB:
+        # In Colab, detect project root from common paths
+        paths = [
+            '/content/open_polymer',
+            '/content/drive/MyDrive/open_polymer',
+            '/root/open_polymer'
+        ]
+        project_root = None
+        for p in paths:
+            if os.path.exists(os.path.join(p, 'data/raw/train.csv')):
+                project_root = p
+                break
+        if project_root is None:
+            raise FileNotFoundError("Project root not found in Colab paths")
+    else:
+        # Local: inference.py is in AutoGluon/systematic_feature/, go up 3 levels
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))    
     # Load main training data
     print("\n📂 Loading main training data...")
     train_df = pd.read_csv(os.path.join(project_root, 'data/raw/train.csv'))
