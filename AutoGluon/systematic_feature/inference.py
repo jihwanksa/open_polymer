@@ -1,12 +1,18 @@
 """
-Use AutoGluon production models for best performance.
+Use AutoGluon models trained with systematic feature analysis.
 
-This script uses pre-trained AutoGluon models from train_autogluon_production.py:
-- AutoGluon training: 60K+ samples, 34 features (10 simple + 11 hand-crafted + 13 RDKit)
-- Best model: WeightedEnsemble_L2 (stacked ensemble of 8 base models)
-- Features: Automatic feature selection and hyperparameter tuning
-- Tg transformation (9/5)x + 45 for distribution shift correction
-- Expected improvement over v85 Random Forest through AutoML optimization
+Supports inference with models from train_for_colab_serial.py configurations:
+- A: Simple features only (10)
+- B: Hand-crafted only (11)
+- C: Current baseline (34: 10 simple + 11 hand-crafted + 13 RDKit)
+- D: Expanded RDKit (56: 10 + 11 + 35)
+- E: All RDKit (~81: 10 + 11 + ~60)
+- F: RDKit expanded only (35)
+- G: No simple features (24: 11 hand-crafted + 13 RDKit)
+- H: No hand-crafted features (23: 10 simple + 13 RDKit)
+
+Usage in Colab:
+    %run /content/open_polymer/AutoGluon/systematic_feature/inference.py --config G
 """
 
 import os
@@ -19,12 +25,25 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from tqdm import tqdm
 import pickle
 import warnings
+import argparse
 warnings.filterwarnings('ignore')
 
-# Force CPU-only mode for AutoGluon (avoids MPS hanging on Apple Silicon)
-os.environ['CUDA_VISIBLE_DEVICES'] = ''
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['MPS_ENABLED'] = '0'
+# Detect Colab environment
+try:
+    from google.colab import drive
+    IN_COLAB = True
+    print("✅ Running in Google Colab", flush=True)
+except ImportError:
+    IN_COLAB = False
+    print("Running locally", flush=True)
+
+# Force CPU-only mode for local (avoids MPS hanging on Apple Silicon)
+if IN_COLAB:
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+else:
+    os.environ['CUDA_VISIBLE_DEVICES'] = ''
+    os.environ['OMP_NUM_THREADS'] = '1'
+    os.environ['MPS_ENABLED'] = '0'
 
 # Try to import RDKit for SMILES canonicalization and descriptors
 try:
@@ -52,22 +71,32 @@ def make_smile_canonical(smile):
 
 class AutoGluonModel:
     """
-    AutoGluon model wrapper for production inference.
+    AutoGluon model wrapper for systematic feature analysis inference.
     
-    🚀 AutoGluon Production Configuration:
-    - Models: WeightedEnsemble_L2 (stacked ensemble of 8 base models)
-    - Training: 60K+ samples, 34 features (10 simple + 11 hand-crafted + 13 RDKit)
-    - Hyperparameter: Automatically tuned by AutoGluon
-    - Preset: medium_quality (balanced quality vs time)
+    Loads pre-trained models from train_for_colab_serial.py configurations (A-H).
+    Models are stored in: /content/autogluon_results/{CONFIG}/{TARGET}
     """
     
-    def __init__(self, model_dir="models/autogluon_production"):
-        self.model_dir = model_dir
-        self.predictors = {}
+    def __init__(self, model_dir=None, config='C'):
+        """
+        Args:
+            model_dir: Path to model directory (auto-detected if None)
+            config: Configuration key (A-H)
+        """
+        self.config = config
         self.target_cols = ['Tg', 'FFV', 'Tc', 'Density', 'Rg']
+        self.predictors = {}
+        
+        if model_dir is None:
+            if IN_COLAB:
+                self.model_dir = f"/content/autogluon_results/{config}"
+            else:
+                self.model_dir = f"models/autogluon_results/{config}"
+        else:
+            self.model_dir = model_dir
     
     def load(self):
-        """Load pre-trained AutoGluon models"""
+        """Load pre-trained AutoGluon models for a specific configuration"""
         try:
             from autogluon.tabular import TabularPredictor
         except ImportError:
@@ -75,33 +104,40 @@ class AutoGluonModel:
             return False
         
         print("\n" + "="*70)
-        print("LOADING AUTOGLUON PRODUCTION MODELS")
+        print(f"LOADING AUTOGLUON MODELS (Configuration {self.config})")
         print("="*70)
+        print(f"Model directory: {self.model_dir}\n", flush=True)
         
         all_loaded = True
         for target in self.target_cols:
-            target_path = f"{self.model_dir}/{target}"
+            target_path = os.path.join(self.model_dir, target)
             
             try:
-                print(f"\n📂 Loading {target}...", end=" ")
+                if not os.path.exists(target_path):
+                    print(f"⚠️  {target}: Path not found: {target_path}")
+                    all_loaded = False
+                    continue
+                    
+                print(f"📂 Loading {target}...", end=" ", flush=True)
                 predictor = TabularPredictor.load(target_path)
                 self.predictors[target] = predictor
-                print(f"✅")
+                print(f"✅", flush=True)
+                
                 # Get feature names (might be method or property depending on AutoGluon version)
                 try:
                     features = predictor.features() if callable(predictor.features) else predictor.features
-                    print(f"   Features: {len(features)}")
+                    print(f"   Features: {len(features)}", flush=True)
                 except:
-                    print(f"   Features: N/A")
+                    print(f"   Features: N/A", flush=True)
                 
             except Exception as e:
-                print(f"❌ Failed: {e}")
+                print(f"❌ Failed: {str(e)[:100]}", flush=True)
                 all_loaded = False
         
         if all_loaded:
             print("\n" + "="*70)
-            print("✅ ALL AUTOGLUON MODELS LOADED!")
-            print("="*70)
+            print(f"✅ ALL MODELS FOR CONFIG {self.config} LOADED!")
+            print("="*70 + "\n", flush=True)
         
         return all_loaded
     
@@ -148,8 +184,138 @@ class AutoGluonModel:
         return predictions
 
 
-def extract_comprehensive_features(df):
-    """Extract 34 comprehensive features: 10 simple + 11 chemistry + 13 RDKit descriptors"""
+# ============================================================================
+# RDKit Descriptors and Feature Configurations (from train_for_colab_serial.py)
+# ============================================================================
+
+RDKIT_CURRENT_13 = [
+    'MolWt', 'LogP', 'NumHDonors', 'NumHAcceptors', 'NumRotatableBonds',
+    'NumAromaticRings', 'TPSA', 'NumSaturatedRings', 'NumAliphaticRings',
+    'RingCount', 'FractionCsp3', 'NumHeteroatoms', 'BertzCT'
+]
+
+CONFIGURATIONS = {
+    'A': {'name': 'simple_only', 'simple': True, 'hand_crafted': False, 'rdkit': []},
+    'B': {'name': 'hand_crafted_only', 'simple': False, 'hand_crafted': True, 'rdkit': []},
+    'C': {'name': 'current_baseline', 'simple': True, 'hand_crafted': True, 'rdkit': RDKIT_CURRENT_13},
+    'G': {'name': 'no_simple', 'simple': False, 'hand_crafted': True, 'rdkit': RDKIT_CURRENT_13},
+    'H': {'name': 'no_hand_crafted', 'simple': True, 'hand_crafted': False, 'rdkit': RDKIT_CURRENT_13},
+}
+
+
+def extract_simple_features(smiles_str):
+    """Extract 10 simple features from SMILES"""
+    s = str(smiles_str)
+    return {
+        'smiles_length': len(s),
+        'carbon_count': s.count('C'),
+        'nitrogen_count': s.count('N'),
+        'oxygen_count': s.count('O'),
+        'sulfur_count': s.count('S'),
+        'fluorine_count': s.count('F'),
+        'ring_count': s.count('c') + s.count('C1'),
+        'double_bond_count': s.count('='),
+        'triple_bond_count': s.count('#'),
+        'branch_count': s.count('('),
+    }
+
+
+def extract_hand_crafted_features(smiles_str):
+    """Extract 11 hand-crafted polymer-specific features"""
+    s = str(smiles_str)
+    num_side_chains = s.count('(')
+    backbone_carbons = s.count('C') - s.count('C(')
+    aromatic_count = s.count('c')
+    
+    return {
+        'num_side_chains': num_side_chains,
+        'backbone_carbons': backbone_carbons,
+        'aromatic_count': aromatic_count,
+        'h_bond_donors': s.count('O') + s.count('N'),
+        'h_bond_acceptors': s.count('O') + s.count('N'),
+        'num_rings': s.count('1') + s.count('2'),
+        'single_bonds': len(s) - s.count('=') - s.count('#') - aromatic_count,
+        'halogen_count': s.count('F') + s.count('Cl') + s.count('Br'),
+        'heteroatom_count': s.count('N') + s.count('O') + s.count('S'),
+        'mw_estimate': (s.count('C') * 12 + s.count('O') * 16 + 
+                       s.count('N') * 14 + s.count('S') * 32 + s.count('F') * 19),
+        'branching_ratio': num_side_chains / max(backbone_carbons, 1),
+    }
+
+
+def extract_rdkit_descriptors(smiles_str, descriptor_names):
+    """Extract specific RDKit descriptors"""
+    if not RDKIT_AVAILABLE or not descriptor_names:
+        return {}
+    
+    try:
+        from rdkit.Chem import Crippen
+        cleaned = str(smiles_str).replace('[*]', '[H]').replace('*', '[H]')
+        cleaned = cleaned.replace('[[H]]', '[H]')
+        mol = Chem.MolFromSmiles(cleaned)
+        if mol is None:
+            return {name: 0.0 for name in descriptor_names}
+        
+        descriptors = {}
+        for name in descriptor_names:
+            try:
+                if hasattr(Descriptors, name):
+                    descriptors[name] = getattr(Descriptors, name)(mol)
+                elif hasattr(Crippen, name):
+                    descriptors[name] = getattr(Crippen, name)(mol)
+                else:
+                    descriptors[name] = 0.0
+            except:
+                descriptors[name] = 0.0
+        return descriptors
+    except:
+        return {name: 0.0 for name in descriptor_names}
+
+
+def extract_features_for_config(df, config_key):
+    """Extract features based on configuration"""
+    if config_key not in CONFIGURATIONS:
+        print(f"⚠️  Config {config_key} not recognized, using C (baseline)")
+        config_key = 'C'
+    
+    config = CONFIGURATIONS[config_key]
+    features = []
+    
+    print(f"Extracting features for config {config_key} ({config['name']})...")
+    for idx, smiles in tqdm(df['SMILES'].items(), total=len(df)):
+        try:
+            smiles_str = str(smiles) if pd.notna(smiles) else ""
+            row = {}
+            
+            if config['simple']:
+                row.update(extract_simple_features(smiles_str))
+            if config['hand_crafted']:
+                row.update(extract_hand_crafted_features(smiles_str))
+            if config['rdkit']:
+                row.update(extract_rdkit_descriptors(smiles_str, config['rdkit']))
+            
+            features.append(row)
+        except:
+            # Fallback: all zeros
+            num_features = 0
+            if config['simple']: num_features += 10
+            if config['hand_crafted']: num_features += 11
+            if config['rdkit']: num_features += len(config['rdkit'])
+            
+            features.append({f'feat_{i}': 0.0 for i in range(num_features)})
+    
+    return pd.DataFrame(features)
+
+
+def extract_comprehensive_features(df, config_key='C'):
+    """Extract features based on configuration"""
+    features = extract_features_for_config(df, config_key)
+    print(f"✅ Created {len(features)} feature vectors with {len(features.columns)} features\n", flush=True)
+    return features
+
+
+def extract_comprehensive_features_old(df):
+    """Extract 34 comprehensive features: 10 simple + 11 chemistry + 13 RDKit descriptors (LEGACY)"""
     features = []
     
     print("Extracting 34 comprehensive features (10 simple + 11 chemistry + 13 RDKit)...")
@@ -427,48 +593,65 @@ def load_and_augment_data():
     return train_df, target_cols
 
 
-def main():
-    """Main function - use pre-trained AutoGluon models"""
+def get_project_root():
+    """Get project root path based on environment"""
+    if IN_COLAB:
+        # Try common Colab paths
+        paths = [
+            '/content/open_polymer',
+            '/content/drive/MyDrive/open_polymer',
+            '/root/open_polymer'
+        ]
+        for p in paths:
+            if os.path.exists(p) and os.path.exists(os.path.join(p, 'data/raw/train.csv')):
+                return p
+        raise FileNotFoundError("Project not found in common Colab paths")
+    else:
+        return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+def main(config='C'):
+    """Main function - use pre-trained AutoGluon models for systematic feature analysis"""
     print("\n" + "="*80)
-    print("🤖 AUTOGLUON PRODUCTION INFERENCE")
+    print(f"🤖 AUTOGLUON INFERENCE (Configuration {config})")
     print("="*80)
-    print("Using pre-trained AutoGluon models from train_autogluon_production.py")
-    print("Models: WeightedEnsemble_L2 (stacked ensemble of 8 base models)")
-    print("Training: 60K+ samples, 34 features, medium_quality preset")
-    print("="*80)
+    print(f"Using models from train_for_colab_serial.py (config {config})")
+    print("Environment: " + ("Google Colab" if IN_COLAB else "Local"))
+    print("="*80 + "\n")
     
-    project_root = os.path.dirname(os.path.dirname(__file__))
+    project_root = get_project_root()
+    print(f"📂 Project root: {project_root}\n", flush=True)
     
     # Load pre-trained AutoGluon models
-    print("\n" + "="*80)
+    print("="*80)
     print("STEP 1: LOAD PRE-TRAINED AUTOGLUON MODELS")
     print("="*80)
     
-    model = AutoGluonModel(model_dir=os.path.join(project_root, "models/autogluon_production"))
+    model = AutoGluonModel(config=config)
     if not model.load():
         print("❌ Failed to load AutoGluon models")
         return
     
     target_cols = ['Tg', 'FFV', 'Tc', 'Density', 'Rg']
     
-    # Load and augment data (for validation on training features)
+    # Load and augment data
     print("\n" + "="*80)
     print("STEP 2: LOAD AND AUGMENT DATA")
     print("="*80)
     
     train_df, _ = load_and_augment_data()
     
-    # Create features (34 comprehensive features with RDKit)
+    # Create features for this configuration
     print("\n" + "="*80)
-    print("STEP 3: EXTRACT COMPREHENSIVE FEATURES (RDKit Enhanced)")
-    print("="*80)
+    print(f"STEP 3: EXTRACT FEATURES FOR CONFIGURATION {config}")
+    print("="*80 + "\n")
     
-    train_features = extract_comprehensive_features(train_df)
+    train_features = extract_comprehensive_features(train_df, config_key=config)
     
     # Generate predictions using AutoGluon models
-    print("\n" + "="*80)
-    print("STEP 4: GENERATE PREDICTIONS WITH AUTOGLUON MODELS")
     print("="*80)
+    print("STEP 4: GENERATE PREDICTIONS WITH AUTOGLUON MODELS")
+    print("="*80 + "\n")
     
     # Pass features DataFrame so AutoGluon can select only the ones it needs
     train_predictions = model.predict(train_features.values, target_cols, all_features_df=train_features)
@@ -476,36 +659,36 @@ def main():
     # Save predictions
     print("\n" + "="*80)
     print("STEP 5: SAVE RESULTS")
-    print("="*80)
+    print("="*80 + "\n")
     
     results_df = pd.DataFrame(train_predictions, columns=target_cols)
     
-    # Apply Tg transformation (2nd place solution)
-    print("\n🔄 Applying Tg transformation...")
-    results_df['Tg'] = (9/5) * results_df['Tg'] + 45
-    print(f"   ✅ Tg range after transformation: [{results_df['Tg'].min():.2f}, {results_df['Tg'].max():.2f}]")
+    # Save to CSV (configuration-specific)
+    if IN_COLAB:
+        output_path = f"/content/inference_results_config_{config}.csv"
+    else:
+        output_path = os.path.join(project_root, f"inference_results_config_{config}.csv")
     
-    # Save to CSV
-    output_path = os.path.join(project_root, "train_v85_best_predictions.csv")
     results_df.to_csv(output_path, index=False)
-    print(f"\n✅ Predictions saved to {output_path}")
-    print(f"\nPrediction statistics:")
+    print(f"✅ Predictions saved to {output_path}", flush=True)
+    print(f"\nPrediction statistics:", flush=True)
     print(results_df.describe())
     
     print("\n" + "="*80)
-    print("✅ AUTOGLUON PRODUCTION INFERENCE COMPLETE!")
+    print(f"✅ INFERENCE COMPLETE (Config {config})!")
     print("="*80)
     print(f"\nFeatures: {train_features.shape[1]}")
     print(f"Training samples: {len(train_df)}")
     print(f"Targets: {', '.join(target_cols)}")
-    print(f"\n📊 AutoGluon delivered:")
-    print(f"   ✅ Automatic feature selection from 34 features")
-    print(f"   ✅ Hyperparameter tuning for each algorithm")
-    print(f"   ✅ Intelligent ensemble weighting (WeightedEnsemble_L2)")
-    print(f"   ✅ Robust predictions on 60K+ training samples")
-    print("="*80)
+    print(f"Configuration: {config} ({CONFIGURATIONS[config]['name']})")
+    print("="*80 + "\n")
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="AutoGluon Inference for Systematic Feature Analysis")
+    parser.add_argument('--config', type=str, choices=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+                       default='C', help='Configuration key (A-H)')
+    
+    args = parser.parse_args()
+    main(config=args.config)
 
