@@ -525,16 +525,16 @@ We performed systematic feature analysis using AutoGluon to identify the optimal
 
 ### 8 Feature Configurations (A-H)
 
-| Config | Name | Simple | Hand-Crafted | RDKit | Total Features | Use Case |
-|--------|------|--------|--------------|-------|----------------|----------|
-| **A** | Simple only | ✅ (10) | ❌ | ❌ | 10 | Baseline: SMILES counting alone |
-| **B** | Hand-crafted only | ❌ | ✅ (11) | ❌ | 11 | Domain knowledge without simple features |
-| **C** | Current baseline | ✅ (10) | ✅ (11) | ✅ (13) | 34 | Original v85 approach |
-| **D** | Expanded RDKit | ✅ (10) | ✅ (11) | ✅ (35) | 56 | More RDKit descriptors (25 additional) |
-| **E** | All RDKit | ✅ (10) | ✅ (11) | ✅ (60) | 81 | Maximum feature set (~60 RDKit descriptors) |
-| **F** | RDKit only expanded | ❌ | ❌ | ✅ (35) | 35 | Pure RDKit without domain knowledge |
-| **G** | No simple | ❌ | ✅ (11) | ✅ (13) | 24 | Domain + RDKit, minimal complexity |
-| **H** | No hand-crafted | ✅ (10) | ❌ | ✅ (13) | 23 | Simple + RDKit, no chemistry knowledge |
+| Config | Name | Simple | Hand-Crafted | RDKit | Total Features | Features Selected by AutoGluon | Use Case |
+|--------|------|--------|--------------|-------|----------------|--------------------------------|----------|
+| **A** | Simple only | ✅ (10) | ❌ | ❌ | 10 | 10/10 (100%) | Baseline: SMILES counting alone |
+| **B** | Hand-crafted only | ❌ | ✅ (11) | ❌ | 11 | 10/11 (91%) | Domain knowledge without simple features |
+| **C** | Current baseline | ✅ (10) | ✅ (11) | ✅ (13) | 34 | 30/34 (88%) | Original v85 approach |
+| **D** | Expanded RDKit | ✅ (10) | ✅ (11) | ✅ (35) | 56 | 49/56 (87%) | More RDKit descriptors (25 additional) |
+| **E** | All RDKit | ✅ (10) | ✅ (11) | ✅ (60) | 81 | 60/81 (74%) | Maximum feature set (~60 RDKit descriptors) |
+| **F** | RDKit only expanded | ❌ | ❌ | ✅ (35) | 35 | 30/35 (86%) | Pure RDKit without domain knowledge |
+| **G** | No simple | ❌ | ✅ (11) | ✅ (13) | 24 | 21/24 (88%) | Domain + RDKit, minimal complexity |
+| **H** | No hand-crafted | ✅ (10) | ❌ | ✅ (13) | 23 | 21/23 (91%) | Simple + RDKit, no chemistry knowledge |
 
 ### Training Infrastructure
 
