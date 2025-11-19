@@ -58,6 +58,8 @@ models/
 *.pth
 *.h5
 
+#png files in product folder
+product/*.png
 # Data files (use Git LFS or external storage)
 # CSV files in data/ are tracked and needed for reproducibility
 # data/*.csv  <- Keep CSV files

@@ -1,0 +1,21 @@
+Traceback (most recent call last):
+  File "/Users/jihwan/miniforge3/envs/polymer/lib/python3.10/site-packages/pandas/__init__.py", line 23, in <module>
+    from pandas.compat import (
+  File "/Users/jihwan/miniforge3/envs/polymer/lib/python3.10/site-packages/pandas/compat/__init__.py", line 26, in <module>
+    from pandas.compat.numpy import is_numpy_dev
+  File "/Users/jihwan/miniforge3/envs/polymer/lib/python3.10/site-packages/pandas/compat/numpy/__init__.py", line 20, in <module>
+    raise ImportError(
+ImportError: this version of pandas is incompatible with numpy < 1.22.4
+your numpy version is 1.21.6.
+Please upgrade numpy to >= 1.22.4 to use this pandas version
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/jihwan/Downloads/open_polymer/src/train_v85_best.py", line 17, in <module>
+    import pandas as pd
+  File "/Users/jihwan/miniforge3/envs/polymer/lib/python3.10/site-packages/pandas/__init__.py", line 28, in <module>
+    raise ImportError(
+ImportError: C extension: None not built. If you want to import pandas from the source directory, you may need to run 'python setup.py build_ext' to build the C extensions first.
+
+ERROR conda.cli.main_run:execute(125): `conda run python src/train_v85_best.py` failed. (See above for error)

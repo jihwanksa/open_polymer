@@ -371,17 +371,23 @@ sequenceDiagram
 
 ## Local Training
 
-Train models locally to validate performance before pushing to Kaggle:
-
 ### 1. Train Best Random Forest Model (v85 - 1st Place!)
+
+**Status:** ✅ Models trained and saved in Google Drive (see AutoGluon section above)
+
+For local training:
 ```bash
 conda activate polymer
 python src/train_v85_best.py
 ```
-**Output:** `models/random_forest_v85_best.pkl` (the 1st place leaderboard model!)
-**Score:** Private 0.07533 | Public 0.08139
-**Time:** ~50 seconds
-**Features:** 21 chemistry-based features + data augmentation
+
+**Note:** 
+- **Output:** `models/random_forest_v85_best.pkl` (the 1st place leaderboard model!)
+- **Score:** Private 0.07533 | Public 0.08139
+- **Time:** ~50 seconds (with full training data)
+- **Features:** 21 chemistry-based features + data augmentation
+- **Requires:** Full dataset (60K+ samples) - available in Kaggle notebook or via external augmentation
+- **Colab training:** Use Google Colab notebook linked in AutoGluon section for GPU-accelerated training
 
 ### 2. Train Graph Neural Network (GNN)
 ```bash
