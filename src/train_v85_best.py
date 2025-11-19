@@ -497,7 +497,7 @@ def main():
     
     # Save model
     project_root = os.path.dirname(os.path.dirname(__file__))
-    model_path = os.path.join(project_root, 'models', 'random_forest_v53_best.pkl')
+    model_path = os.path.join(project_root, 'models', 'random_forest_v85_best.pkl')
     model.save(model_path)
     
     print("\n" + "="*80)
