@@ -296,8 +296,8 @@ def train_or_load_model(target, train_df, features_df, output_dir, time_limit):
         num_bag_sets=1,
         num_stack_levels=0 if time_limit < 300 else 1,
         hyperparameters={
-            'NN_TORCH': [{'ag_args_fit': {'num_gpus': 1}}],
-            'FASTAI': [{'ag_args_fit': {'num_gpus': 1}}],
+            #'NN_TORCH': [{'ag_args_fit': {'num_gpus': 1}}],
+            #'FASTAI': [{'ag_args_fit': {'num_gpus': 1}}],
             'GBM': [{'ag_args_fit': {'num_gpus': 0}}],
             'XGB': [{'ag_args_fit': {'num_gpus': 0}}],
             'CAT': [{'ag_args_fit': {'num_gpus': 0}}],
