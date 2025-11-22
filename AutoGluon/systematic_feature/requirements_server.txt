@@ -1,0 +1,24 @@
+# Requirements for running evaluate_features_v2.py on server
+# Python 3.8+ recommended
+
+# Core ML
+autogluon.tabular>=1.0.0
+numpy>=1.21.0
+pandas>=1.3.0
+
+# Chemistry
+rdkit>=2022.9.1
+
+# Graph analysis
+networkx>=2.6
+
+# Utilities
+tqdm>=4.62.0
+
+# Note: AutoGluon will install many dependencies including:
+# - scikit-learn
+# - lightgbm
+# - xgboost
+# - catboost
+# - torch (optional, for neural networks)
+# - fastai (optional, for neural networks)
